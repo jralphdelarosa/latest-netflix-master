@@ -1,16 +1,27 @@
 package com.example.myfirstandroidtvapp.presentation.login
 
-import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,17 +31,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.HowToReg
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -44,7 +52,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -54,24 +69,139 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.text.TextStyle
 
+// scaling effect
+//@Composable
+//fun LoginRegistrationScreen(navController: NavController) {
+//    var isSignup by remember { mutableStateOf(false) }
+//    var scale by remember { mutableStateOf(1f) }
+//    var alpha by remember { mutableStateOf(1f) }
+//
+//    LaunchedEffect(isSignup) {
+//        animate(
+//            initialValue = 1f,
+//            targetValue = 1.1f,
+//            animationSpec = tween(200, easing = FastOutSlowInEasing)
+//        ) { value, _ ->
+//            scale = value
+//        }
+//        animate(
+//            initialValue = 1.1f,
+//            targetValue = 1f,
+//            animationSpec = tween(300, easing = LinearOutSlowInEasing)
+//        ) { value, _ ->
+//            scale = value
+//        }
+//    }
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Color.Black)
+//            .onKeyEvent {
+//                if (it.type == KeyEventType.KeyDown) {
+//                    when (it.key) {
+//                        Key.DirectionLeft -> {
+//                            isSignup = false
+//                            true
+//                        }
+//                        Key.DirectionRight -> {
+//                            isSignup = true
+//                            true
+//                        }
+//                        else -> false
+//                    }
+//                } else false
+//            }
+//    ) {
+//        Box(modifier = Modifier.fillMaxWidth()) {
+//            Row(
+//                modifier = Modifier
+//                    .padding(end = 20.dp)
+//                    .align(Alignment.TopEnd)
+//            ) {
+//                Image(
+//                    painter = painterResource(id = R.drawable.logo),
+//                    contentDescription = "Logo",
+//                    modifier = Modifier.size(150.dp)
+//                )
+//            }
+//
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 20.dp),
+//                horizontalArrangement = Arrangement.Center
+//            ) {
+//                LoginToggleSwitch(selectedOption = isSignup, onOptionSelected = { isSignup = it })
+//            }
+//        }
+//
+//        Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .weight(1f)
+//                .graphicsLayer(scaleX = scale, scaleY = scale, alpha = alpha)
+//        ) {
+//            if (isSignup) {
+//                RegistrationScreen(navController)
+//            } else {
+//                LoginScreen(navController)
+//            }
+//        }
+//
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.Center
+//        ) {
+//            Button(
+//                onClick = { navController.navigate("home") },
+//                modifier = Modifier.width(200.dp),
+//                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+//            ) {
+//                Text("Watch as Guest", color = Color.White)
+//            }
+//        }
+//    }
+//}
+
+//sliding animation
 @Composable
 fun LoginRegistrationScreen(navController: NavController) {
-
     var isSignup by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-    LaunchedEffect(isSignup) {
-        Toast.makeText(context, isSignup.toString(), Toast.LENGTH_SHORT).show()
-    }
+    val offsetX by animateDpAsState(
+        targetValue = if (isSignup) (-300).dp else 300.dp,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing), label = "OffsetX Animation"
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (isSignup) 1f else 1f,
+        animationSpec = tween(durationMillis = 500), label = "Alpha Animation"
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .onKeyEvent {
+                if (it.type == KeyEventType.KeyDown) {
+                    when (it.key) {
+                        Key.DirectionLeft -> {
+                            isSignup = false
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            isSignup = true
+                            true
+                        }
+                        else -> false
+                    }
+                } else false
+            }
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            // Logo at the top-right corner
             Row(
                 modifier = Modifier
                     .padding(end = 20.dp)
@@ -80,13 +210,10 @@ fun LoginRegistrationScreen(navController: NavController) {
                 Image(
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = "Logo",
-                    modifier = Modifier
-                        .size(150.dp)
+                    modifier = Modifier.size(150.dp)
                 )
             }
 
-
-            // Centered Row for Toggle Switch
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,46 +224,138 @@ fun LoginRegistrationScreen(navController: NavController) {
             }
         }
 
-
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Pushes this Box to take up remaining space
+                .weight(1f)
         ) {
-            if(isSignup){
-                RegistrationScreen(navController)
-            }else{
+            this@Column.AnimatedVisibility(
+                visible = !isSignup,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
+            ) {
                 LoginScreen(navController)
             }
 
+            this@Column.AnimatedVisibility(
+                visible = isSignup,
+                enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+            ) {
+                RegistrationScreen(navController)
+            }
         }
 
-        // Guest Mode
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             Button(
-                onClick = {
-                    navController.navigate("home")
-                },
+                onClick = { navController.navigate("home") },
                 modifier = Modifier.width(200.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
             ) {
                 Text("Watch as Guest", color = Color.White)
             }
         }
-
-
     }
-
-
 }
+
+//rotate on y axis animation
+//@Composable
+//fun LoginRegistrationScreen(navController: NavController) {
+//    var isSignup by remember { mutableStateOf(false) }
+//    val context = LocalContext.current
+//    val rotationY by animateFloatAsState(
+//        targetValue = if (isSignup) 180f else 0f,
+//        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing), label = "RotationY Animation"
+//    )
+//    val alpha by animateFloatAsState(
+//        targetValue = if (rotationY % 180 == 90f) 0f else 1f,
+//        animationSpec = tween(durationMillis = 250), label = "Alpha Animation"
+//    )
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Color.Black)
+//            .onKeyEvent {
+//                if (it.type == KeyEventType.KeyDown) {
+//                    when (it.key) {
+//                        Key.DirectionLeft -> {
+//                            isSignup = false
+//                            true
+//                        }
+//                        Key.DirectionRight -> {
+//                            isSignup = true
+//                            true
+//                        }
+//                        else -> false
+//                    }
+//                } else false
+//            }
+//    ) {
+//        Box(modifier = Modifier.fillMaxWidth()) {
+//            Row(
+//                modifier = Modifier
+//                    .padding(end = 20.dp)
+//                    .align(Alignment.TopEnd)
+//            ) {
+//                Image(
+//                    painter = painterResource(id = R.drawable.logo),
+//                    contentDescription = "Logo",
+//                    modifier = Modifier.size(150.dp)
+//                )
+//            }
+//
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 20.dp),
+//                horizontalArrangement = Arrangement.Center
+//            ) {
+//                LoginToggleSwitch(selectedOption = isSignup, onOptionSelected = { isSignup = it })
+//            }
+//        }
+//
+//        Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .weight(1f)
+//                .graphicsLayer(rotationY = rotationY)
+//        ) {
+//            Box(
+//                modifier = Modifier.graphicsLayer(scaleX = if (rotationY > 90f) -1f else 1f, alpha = alpha)
+//            ) {
+//                if (isSignup) {
+//                    RegistrationScreen(navController)
+//                } else {
+//                    LoginScreen(navController)
+//                }
+//            }
+//        }
+//
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.Center
+//        ) {
+//            Button(
+//                onClick = { navController.navigate("home") },
+//                modifier = Modifier.width(200.dp),
+//                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+//            ) {
+//                Text("Watch as Guest", color = Color.White)
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun LoginScreen(navController: NavController) {
+
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -159,31 +378,16 @@ fun LoginScreen(navController: NavController) {
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    TextField(
-                        value = "",
-                        onValueChange = {},
-                        placeholder = { Text("Email", color = Color.Gray) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Black,
-                            unfocusedContainerColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.Red
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                    NetflixTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = "Enter your email"
                     )
-                    TextField(
-                        value = "",
-                        onValueChange = {},
-                        placeholder = { Text("Password", color = Color.Gray) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Black,
-                            unfocusedContainerColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.Red
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+
+                    NetflixTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        placeholder = "Enter your password"
                     )
                     Button(
                         onClick = {},
@@ -249,6 +453,9 @@ fun LoginScreen(navController: NavController) {
 
 @Composable
 fun RegistrationScreen(navController: NavController) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -271,31 +478,16 @@ fun RegistrationScreen(navController: NavController) {
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    TextField(
-                        value = "",
-                        onValueChange = {},
-                        placeholder = { Text("Email", color = Color.Gray) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Black,
-                            unfocusedContainerColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.Red
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                    NetflixTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = "Enter your email"
                     )
-                    TextField(
-                        value = "",
-                        onValueChange = {},
-                        placeholder = { Text("Password", color = Color.Gray) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Black,
-                            unfocusedContainerColor = Color.DarkGray,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            cursorColor = Color.Red
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+
+                    NetflixTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        placeholder = "Enter your password"
                     )
                     Button(
                         onClick = {},
@@ -356,6 +548,46 @@ fun RegistrationScreen(navController: NavController) {
             }
         }
     }
+}
+
+@Composable
+fun NetflixTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = TextStyle(color = Color.White, fontSize = 18.sp),
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = Color.Gray,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Light
+            )
+        },
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedContainerColor = Color.Black,
+            unfocusedContainerColor = Color.Black,
+            focusedIndicatorColor = Color.Red,  // Red border when focused
+            unfocusedIndicatorColor = Color.Gray,  // Gray border when not focused
+            cursorColor = Color.Red
+        ),
+        shape = RoundedCornerShape(8.dp),
+        singleLine = true,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(55.dp)
+            .onFocusChanged { isFocused = it.hasFocus }
+            .padding(horizontal = 8.dp)
+    )
 }
 
 @Composable
