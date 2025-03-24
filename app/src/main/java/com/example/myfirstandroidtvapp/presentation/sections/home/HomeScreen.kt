@@ -37,7 +37,7 @@ object FocusUtils {
 }
 
 @Composable
-fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel) {
+fun HomeScreen(navController: NavController) {
     var lastSelectedItem by remember { mutableStateOf(NavItem.Dashboard) }
 
     Box(
@@ -69,11 +69,11 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel) {
                     .background(Color.Black.copy(alpha = 0.3f))
             ) {
                 when (lastSelectedItem) {
-                    NavItem.Search -> SearchScreen(homeViewModel)
-                    NavItem.Dashboard -> DashBoardScreen(navController, homeViewModel)
-                    NavItem.Movies -> MovieScreen(homeViewModel)
-                    NavItem.Series -> SeriesScreen(homeViewModel)
-                    NavItem.Settings -> SettingsScreen(homeViewModel)
+                    NavItem.Search -> SearchScreen()
+                    NavItem.Dashboard -> DashBoardScreen(navController)
+                    NavItem.Movies -> MovieScreen()
+                    NavItem.Series -> SeriesScreen()
+                    NavItem.Settings -> SettingsScreen()
                 }
             }
         }

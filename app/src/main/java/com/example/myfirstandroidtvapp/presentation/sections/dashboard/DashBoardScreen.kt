@@ -38,7 +38,6 @@ import com.example.myfirstandroidtvapp.data.remote.TmdbApiConstants
 import com.example.myfirstandroidtvapp.domain.model.Movie
 import com.example.myfirstandroidtvapp.presentation.NavItem
 import com.example.myfirstandroidtvapp.presentation.sections.home.FocusUtils
-import com.example.myfirstandroidtvapp.presentation.sections.home.HomeViewModel
 
 val categorySection = listOf(
     "Popular Movies",
@@ -50,19 +49,18 @@ val categorySection = listOf(
 @Composable
 fun DashBoardScreen(
     navController: NavController,
-    homeViewModel: HomeViewModel,
-    viewModel: MovieViewModel = hiltViewModel()
+//    viewModel: MovieViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchPopularMovies(TmdbApiConstants.API_KEY)
+//        viewModel.fetchPopularMovies(TmdbApiConstants.API_KEY)
     }
 
 
     LazyColumn {
         items(categorySection) { categorySection ->
-            MovieCategory(navController, viewModel, categorySection)
+//            MovieCategory(navController, viewModel, categorySection)
 
         }
     }
@@ -71,10 +69,10 @@ fun DashBoardScreen(
 @Composable
 fun MovieCategory(
     navController: NavController,
-    viewModel: MovieViewModel,
+//    viewModel: MovieViewModel,
     category: String
 ) {
-    val movies by viewModel.movies.collectAsState()
+//    val movies by viewModel.movies.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -86,13 +84,13 @@ fun MovieCategory(
             color = Color.White,
             modifier = Modifier.padding(16.dp)
         )
-        LazyRow {
-            items(movies.size) { index ->
-                MovieItem(movies[index]) {
-                    navController.navigate("details/${movies[index].id}")
-                }
-            }
-        }
+//        LazyRow {
+//            items(movies.size) { index ->
+//                MovieItem(movies[index]) {
+//                    navController.navigate("details/${movies[index].id}")
+//                }
+//            }
+//        }
     }
 }
 

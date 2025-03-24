@@ -14,10 +14,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.example.myfirstandroidtvapp.R
-import com.example.myfirstandroidtvapp.presentation.sections.home.HomeViewModel
 
 @Composable
-fun SettingsScreen(homeViewModel: HomeViewModel) {
+fun SettingsScreen() {
     val context = LocalContext.current
 
     Column(

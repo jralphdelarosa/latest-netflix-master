@@ -1,5 +1,7 @@
 [versions]
 agp = "8.8.2"
+androidNetworking = "1.0.2"
+androidNetworkingVersion = "1.0.4"
 androidYoutubeextractor = "2.1.0"
 coilCompose = "2.5.0"
 converterGson = "2.9.0"
@@ -13,8 +15,12 @@ lifecycleViewmodelCompose = "2.8.7"
 loggingInterceptorVersion = "4.9.3"
 material3 = "1.3.1"
 materialIconsExtended = "1.7.8"
+mmkv = "2.1.0"
+mmkvStatic = "1.3.0"
 okhttp = "4.12.0"
 retrofit = "2.9.0"
+rx2AndroidNetworking = "1.0.4"
+timber = "5.0.1"
 tvFoundation = "1.0.0-alpha12"
 tvMaterial = "1.0.0"
 lifecycleRuntimeKtx = "2.8.7"
@@ -30,9 +36,9 @@ navigationCompose = "2.7.7"
 webkit = "1.13.0"
 youtubeAndroidPlayer = "1.2.2"
 youtubeextractor = "7.0.0"
+window = "1.3.0"
 
 [libraries]
-android-youtubeextractor = { module = "com.github.HaarigerHarald:android-youtubeExtractor", version.ref = "androidYoutubeextractor" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -52,11 +58,17 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+fast-android-networking-android-networking = { module = "com.github.amitshekhariitbhu.Fast-Android-Networking:android-networking", version.ref = "androidNetworkingVersion" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
+mmkv-static = { module = "com.tencent:mmkv-static", version.ref = "mmkvStatic" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp3-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptorVersion" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+rx2-android-networking = { module = "com.github.amitshekhariitbhu.Fast-Android-Networking:rx2-android-networking", version.ref = "rx2AndroidNetworking" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
@@ -68,8 +80,10 @@ desugarJdkLibs = { module = "com.android.tools:desugar_jdk_libs", version.ref = 
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 youtube-android-player = { module = "com.google.android.youtube:youtube-android-player", version.ref = "youtubeAndroidPlayer" }
 youtubeextractor = { module = "com.github.Commit451:YouTubeExtractor", version.ref = "youtubeextractor" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
 
 [plugins]
+kotlin-parcelize = { id = "kotlin-parcelize" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

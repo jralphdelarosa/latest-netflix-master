@@ -11,7 +11,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:name=".MyFirstAndroidTVApp"
+        android:name=".TvCoreApplication"
         android:allowBackup="true"
         android:banner="@mipmap/ic_launcher"
         android:icon="@mipmap/ic_launcher"

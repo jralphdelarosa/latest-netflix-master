@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hiltAndroid)
     kotlin("kapt")
+    alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
@@ -12,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.myfirstandroidtvapp"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -59,11 +60,13 @@ dependencies {
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.window)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.kotlin.reflect)
 
     // Jetpack Compose
     //noinspection GradleDependency
@@ -105,4 +108,11 @@ dependencies {
     //noinspection GradleDependency
     implementation(libs.androidx.webkit)
     coreLibraryDesugaring(libs.desugarJdkLibs)
+
+    //Timber
+    implementation(libs.timber)
+
+    //MKKB for caching
+    //noinspection GradleDependency
+    implementation(libs.mmkv.static)
 }

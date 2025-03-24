@@ -11,7 +11,6 @@ import com.example.myfirstandroidtvapp.presentation.detailscreen.DetailScreen
 import com.example.myfirstandroidtvapp.presentation.login.LoginRegistrationScreen
 import com.example.myfirstandroidtvapp.presentation.login.LoginScreen
 import com.example.myfirstandroidtvapp.presentation.sections.home.HomeScreen
-import com.example.myfirstandroidtvapp.presentation.sections.home.HomeViewModel
 import com.example.myfirstandroidtvapp.presentation.sections.movies.MovieScreen
 import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
 import com.example.myfirstandroidtvapp.presentation.sections.series.SeriesScreen
@@ -20,15 +19,14 @@ import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsSc
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val homeViewModel: HomeViewModel = hiltViewModel()
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") { LoginRegistrationScreen(navController) }
-        composable("home") { HomeScreen(navController, homeViewModel) }
-        composable("movies") { MovieScreen(homeViewModel) }
-        composable("search") { SearchScreen(homeViewModel) }
-        composable("series") { SeriesScreen(homeViewModel) }
-        composable("settings") { SettingsScreen(homeViewModel) }
+        composable("home") { HomeScreen(navController) }
+        composable("movies") { MovieScreen() }
+        composable("search") { SearchScreen() }
+        composable("series") { SeriesScreen() }
+        composable("settings") { SettingsScreen() }
         composable("details/{movieId}",
             arguments = listOf(navArgument("movieId") { type = NavType.IntType })
         ) { backStackEntry ->
