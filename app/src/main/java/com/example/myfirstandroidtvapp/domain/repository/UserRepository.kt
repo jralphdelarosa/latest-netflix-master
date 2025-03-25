@@ -23,4 +23,5 @@ interface UserRepository {
     suspend fun checkAutoLogin(): ApiResponse<CredentialResponse>
     fun updateToken(accessToken: String?, refreshToken: String?)
     fun updateUserToken(accessToken: String?, refreshToken: String?)
+    fun clearCurrentUserData()
 }

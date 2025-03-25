@@ -14,27 +14,27 @@ class UserSharedPrefImpl @Inject constructor(
     prefFileName: String
 ) : UserSharedPref {
 
-    private val mPrefs: SharedPreferences =
+    private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(prefFileName, Context.MODE_PRIVATE)
 
     override fun getAccessToken(): String? =
-        mPrefs.getString(PREF_KEY_ACCESS_TOKEN, null)
+        sharedPreferences.getString(PREF_KEY_ACCESS_TOKEN, null)
 
     override fun setAccessToken(accessToken: String?) {
         accessToken?.takeIf { it != "Bearer null" }?.let {
-            mPrefs.edit().putString(PREF_KEY_ACCESS_TOKEN, it).apply()
+            sharedPreferences.edit().putString(PREF_KEY_ACCESS_TOKEN, it).apply()
         } ?: run {
-            mPrefs.edit().remove(PREF_KEY_ACCESS_TOKEN).apply()
+            sharedPreferences.edit().remove(PREF_KEY_ACCESS_TOKEN).apply()
         }
     }
 
     override fun getRefreshToken(): String? =
-        mPrefs.getString(PREF_KEY_REFRESH_TOKEN, null)
+        sharedPreferences.getString(PREF_KEY_REFRESH_TOKEN, null)
 
     override fun setRefreshToken(refreshToken: String?) {
         refreshToken?.let {
-            mPrefs.edit().putString(PREF_KEY_REFRESH_TOKEN, it).apply()
-        } ?: mPrefs.edit().remove(PREF_KEY_REFRESH_TOKEN).apply()
+            sharedPreferences.edit().putString(PREF_KEY_REFRESH_TOKEN, it).apply()
+        } ?: sharedPreferences.edit().remove(PREF_KEY_REFRESH_TOKEN).apply()
     }
 
     override fun getAutoPlayConfig(): Boolean? {
@@ -42,7 +42,9 @@ class UserSharedPrefImpl @Inject constructor(
     }
 
     override fun setAutoPlay(autoPlay: Boolean?) {
-        TODO("Not yet implemented")
+        sharedPreferences.edit()
+            .putBoolean("AUTO_PLAY", true)
+            .apply()
     }
 
     override fun getDeviceId(): String {
@@ -50,23 +52,23 @@ class UserSharedPrefImpl @Inject constructor(
     }
 
     override fun getUserAccessToken(): String? =
-        mPrefs.getString(PREF_KEY_USER_ACCESS_TOKEN, null)
+        sharedPreferences.getString(PREF_KEY_USER_ACCESS_TOKEN, null)
 
     override fun setUserAccessToken(accessToken: String?) {
         accessToken?.takeIf { it != "Bearer null" }?.let {
-            mPrefs.edit().putString(PREF_KEY_USER_ACCESS_TOKEN, it).apply()
+            sharedPreferences.edit().putString(PREF_KEY_USER_ACCESS_TOKEN, it).apply()
         } ?: run {
-            mPrefs.edit().remove(PREF_KEY_USER_ACCESS_TOKEN).apply()
+            sharedPreferences.edit().remove(PREF_KEY_USER_ACCESS_TOKEN).apply()
         }
     }
 
     override fun getUserRefreshToken(): String? =
-        mPrefs.getString(PREF_KEY_USER_REFRESH_TOKEN, null)
+        sharedPreferences.getString(PREF_KEY_USER_REFRESH_TOKEN, null)
 
     override fun setUserRefreshToken(refreshToken: String?) {
         refreshToken?.let {
-            mPrefs.edit().putString(PREF_KEY_USER_REFRESH_TOKEN, it).apply()
-        } ?: mPrefs.edit().remove(PREF_KEY_USER_REFRESH_TOKEN).apply()
+            sharedPreferences.edit().putString(PREF_KEY_USER_REFRESH_TOKEN, it).apply()
+        } ?: sharedPreferences.edit().remove(PREF_KEY_USER_REFRESH_TOKEN).apply()
     }
 
     override fun setTemplateId(templateId: String?) {
@@ -78,7 +80,7 @@ class UserSharedPrefImpl @Inject constructor(
     }
 
     override fun isUserLoggedIn(): Boolean =
-        mPrefs.getBoolean(USER_LOGGED_IN, false)
+        sharedPreferences.getBoolean(USER_LOGGED_IN, false)
 
     override fun getBookmark(objectId: String): String? {
         TODO("Not yet implemented")
@@ -90,17 +92,17 @@ class UserSharedPrefImpl @Inject constructor(
 
     override fun setUserLoggedIn(loggedIn: Boolean?) {
         loggedIn?.let {
-            mPrefs.edit().putBoolean(USER_LOGGED_IN, it).apply()
-        } ?: mPrefs.edit().remove(USER_LOGGED_IN).apply()
+            sharedPreferences.edit().putBoolean(USER_LOGGED_IN, it).apply()
+        } ?: sharedPreferences.edit().remove(USER_LOGGED_IN).apply()
     }
 
     override fun getDeviceUUID(): String? =
-        mPrefs.getString(DEVICE_UUID, null)
+        sharedPreferences.getString(DEVICE_UUID, null)
 
     override fun setDeviceUUID(uuid: String?) {
         uuid?.let {
-            mPrefs.edit().putString(DEVICE_UUID, it).apply()
-        } ?: mPrefs.edit().remove(DEVICE_UUID).apply()
+            sharedPreferences.edit().putString(DEVICE_UUID, it).apply()
+        } ?: sharedPreferences.edit().remove(DEVICE_UUID).apply()
     }
 
     companion object {

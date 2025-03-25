@@ -12,6 +12,7 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.remote.dto.PublishedSite
 import com.tencent.mmkv.BuildConfig
 import java.net.Inet4Address
@@ -20,13 +21,19 @@ import java.net.NetworkInterface
 import java.net.SocketException
 import java.util.Enumeration
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Created by John Ralph Dela Rosa on 3/23/2025.
  */
 
 @HiltAndroidApp
+@Singleton
 class TvCoreApplication : Application() {
+
+    @Inject
+    lateinit var userSharedPref: UserSharedPref
 
     override fun onCreate() {
         super.onCreate()
@@ -141,6 +148,14 @@ class TvCoreApplication : Application() {
         TvCoreApplication.deviceId = (storedDeviceId ?: UUID.randomUUID().toString().also { newId ->
             mmkv.encode("device_id", newId)
         })
+    }
+
+    fun setUUID() {
+        Timber.d("setUUID()")
+        val storedUUID = userSharedPref.getDeviceUUID()
+        TvCoreApplication.deviceId = storedUUID ?: UUID.randomUUID().toString().also {
+            userSharedPref.setDeviceUUID(it)
+        }
     }
 
 }

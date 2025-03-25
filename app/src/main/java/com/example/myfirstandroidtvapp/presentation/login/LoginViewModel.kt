@@ -3,6 +3,7 @@ package com.example.myfirstandroidtvapp.presentation.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
@@ -16,11 +17,14 @@ import javax.inject.Inject
 /**
  * Created by John Ralph Dela Rosa on 3/24/2025.
  */
-sealed class    LoginState {
+sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
     data class Success(val user: LoginResponse) : LoginState()
     data class Error(val errorType: ErrorType, val message: String) : LoginState()
+
+    object LoggOut : LoginState()
+    object LogoutSuccess : LoginState()
 }
 
 enum class ErrorType {
@@ -33,7 +37,7 @@ enum class ErrorType {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: UserRepository
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -44,10 +48,11 @@ class LoginViewModel @Inject constructor(
             Timber.tag("LoginViewModel").d("Login started with email: $email")
             _loginState.value = LoginState.Loading
 
-            when (val result = authRepository.login(email, password)) {
+            when (val result = userRepository.login(email, password)) {
                 is ApiResponse.Success -> {
                     Timber.tag("LoginViewModel").d("Login success: ${result.data}")
                     _loginState.value = LoginState.Success(result.data)
+                    TvCoreApplication.isUserLoggedIn.value = true
                 }
 
                 is ApiResponse.Error -> {
@@ -69,6 +74,14 @@ class LoginViewModel @Inject constructor(
                 }
 
             }
+        }
+    }
+
+    fun logoutUser() {
+        viewModelScope.launch {
+            _loginState.value = LoginState.LoggOut
+            userRepository.clearCurrentUserData()
+            _loginState.value = LoginState.LogoutSuccess
         }
     }
 }

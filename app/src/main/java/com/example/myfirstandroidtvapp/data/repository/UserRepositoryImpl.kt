@@ -70,6 +70,27 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun clearCurrentUserData() {
+        // Clear stored tokens
+        userPref.setUserAccessToken(null)
+        userPref.setUserRefreshToken(null)
+        userPref.setAccessToken(null)
+        userPref.setRefreshToken(null)
+
+        // Clear login status and preferences
+        userPref.setUserLoggedIn(false)
+        userPref.setAutoPlay(null)
+        userPref.setDeviceUUID(null)
+
+        // Clear SharedPreferences
+        editor.remove("autoplay").apply()
+
+        // Reset UUID or perform additional cleanup if needed
+        TvCoreApplication.instance.setUUID()
+
+        Timber.d("User session cleared successfully")
+    }
+
     override suspend fun refreshToken(): ApiResponse<LoginResponse> {
         return try {
             val refreshToken = userPref.getUserRefreshToken()  // Fetch from SharedPreferences

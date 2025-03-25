@@ -96,9 +96,8 @@ import timber.log.Timber
 
 //sliding animation
 @Composable
-fun LoginRegistrationScreen(navController: NavController) {
+fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavController) {
     var isSignup by remember { mutableStateOf(false) }
-    val viewModel: LoginViewModel = hiltViewModel()
     val context = LocalContext.current
     val offsetX by animateDpAsState(
         targetValue = if (isSignup) (-300).dp else 300.dp,
@@ -166,7 +165,7 @@ fun LoginRegistrationScreen(navController: NavController) {
                 exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
             ) {
                 LoginScreen(
-                    viewModel = viewModel,
+                    loginViewModel = loginViewModel,
                     navController = navController
                 )
             }
@@ -198,7 +197,7 @@ fun LoginRegistrationScreen(navController: NavController) {
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel,
+    loginViewModel: LoginViewModel,
     navController: NavController
 ) {
 
@@ -208,10 +207,8 @@ fun LoginScreen(
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val focusManager = LocalFocusManager.current
-
     val coroutineScope = rememberCoroutineScope()
-    val loginState by viewModel.loginState.collectAsState()
+    val loginState by loginViewModel.loginState.collectAsState()
 
     LaunchedEffect(loginState) {
         when (loginState) {
@@ -295,7 +292,7 @@ fun LoginScreen(
                             onClick = {
                                 isLoading = true
                                 coroutineScope.launch {
-                                    viewModel.login(email, password)
+                                    loginViewModel.login(email, password)
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),

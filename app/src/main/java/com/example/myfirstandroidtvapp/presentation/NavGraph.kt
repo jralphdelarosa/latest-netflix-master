@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.example.myfirstandroidtvapp.presentation.detailscreen.DetailScreen
 import com.example.myfirstandroidtvapp.presentation.login.LoginRegistrationScreen
 import com.example.myfirstandroidtvapp.presentation.login.LoginScreen
+import com.example.myfirstandroidtvapp.presentation.login.LoginViewModel
 import com.example.myfirstandroidtvapp.presentation.sections.home.HomeScreen
 import com.example.myfirstandroidtvapp.presentation.sections.movies.MovieScreen
 import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
@@ -19,10 +20,11 @@ import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsSc
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val loginViewModel: LoginViewModel = hiltViewModel()
 
     NavHost(navController = navController, startDestination = "login") {
-        composable("login") { LoginRegistrationScreen(navController) }
-        composable("home") { HomeScreen(navController) }
+        composable("login") { LoginRegistrationScreen(loginViewModel, navController) }
+        composable("home") { HomeScreen(loginViewModel, navController) }
         composable("movies") { MovieScreen() }
         composable("search") { SearchScreen() }
         composable("series") { SeriesScreen() }
