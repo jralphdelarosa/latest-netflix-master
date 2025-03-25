@@ -12,7 +12,7 @@ import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
  * Created by John Ralph Dela Rosa on 3/24/2025.
  */
 interface UserRepository {
-    suspend fun login(username: String, password: String): ApiResponse<LoginResponse>
+    suspend fun login(email: String, password: String): ApiResponse<LoginResponse>
     suspend fun refreshToken(): ApiResponse<LoginResponse>
     suspend fun getConfig(): ApiResponse<ConfigResponse>
     suspend fun loadCustomCMSConfig(): ApiResponse<CustomDomainConfigResponse>

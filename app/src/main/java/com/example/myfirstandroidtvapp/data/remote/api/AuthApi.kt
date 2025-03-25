@@ -22,15 +22,16 @@ import retrofit2.http.Url
 // Sealed class for API responses
 sealed class ApiResponse<out T> {
     data class Success<T>(val data: T) : ApiResponse<T>()
-    data class Error(val message: String, val code: Int? = null) : ApiResponse<Nothing>()
+    data class Error(val message: String) : ApiResponse<Nothing>()
     object NetworkError : ApiResponse<Nothing>()
 }
 
 interface AuthApi {
     @POST("clients/auth/{tenantId}/login/")
     suspend fun doServerLoginApiCall(
+        @Path("tenantId") tenantId: String,
         @Body request: LoginRequest
-        ): ApiResponse<LoginResponse>
+    ): LoginResponse
 
     @POST("auth/refresh/")
     suspend fun refreshToken(

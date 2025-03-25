@@ -90,7 +90,7 @@ class TvCoreApplication : Application() {
         lateinit var instance: TvCoreApplication
             private set
 
-        var debugApp: Boolean = false
+        var debugApp: Boolean = true
         var deviceId: String = ""
         var idfa: String = "00000000-0000-0000-0000-000000000000"
         var isLat: Boolean = false

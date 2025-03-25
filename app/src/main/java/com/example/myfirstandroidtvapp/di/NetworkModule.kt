@@ -30,10 +30,20 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    // ✅ Provide Gson instance for JSON parsing
     @Provides
     @Singleton
-    fun provideGson(): Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY // Logs full request & response body
+        }
+    }
+
+    // Provide Gson instance for JSON parsing
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return GsonBuilder().serializeNulls().create() // Ensures null fields are included
+    }
 
     // Provide SharedPreferences
     @Provides

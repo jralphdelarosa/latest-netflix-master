@@ -2,6 +2,10 @@ package com.example.myfirstandroidtvapp.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.http.HttpException
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresExtension
 import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.remote.ApiEndPoint
@@ -16,7 +20,9 @@ import com.example.myfirstandroidtvapp.data.remote.request.AutoLoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.LoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.RefreshTokenRequest
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
+import com.google.gson.Gson
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,16 +42,31 @@ class UserRepositoryImpl @Inject constructor(
     )
     private val editor: SharedPreferences.Editor = sharedPreferences.edit()
 
-    override suspend fun login(username: String, password: String): ApiResponse<LoginResponse> {
+    @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
+    override suspend fun login(email: String, password: String): ApiResponse<LoginResponse> {
         return try {
-            val request = if (username.contains("@")) {
-                LoginRequest("", username, password)
+            val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
+
+            val request = if (email.matches(emailRegex)) {
+                LoginRequest(username = "", email = email, password = password)  // Email login
             } else {
-                LoginRequest(username, "", password)
+                LoginRequest(username = email, email = "", password = password)  // Username login
             }
-            authApi.doServerLoginApiCall(request)
-        } catch (e: Exception) {
-            ApiResponse.Error(e.localizedMessage ?: "Network error")
+
+            Timber.tag("LoginRequest").d(Gson().toJson(request))
+
+            // Call API and wrap response
+            val response = authApi.doServerLoginApiCall(ApiEndPoint.TENANT_ID, request)
+            ApiResponse.Success(response)
+
+        } catch (e: HttpException) {
+            Timber.tag("LoginAPI").e("HTTP Exception: ${e.message}")
+            ApiResponse.Error(e.message ?: "HTTP error")
+        } catch (e: IOException) {  // Handles network failures (no internet, timeout, etc.)
+            ApiResponse.NetworkError
+
+        } catch (e: Exception) {  // Handles any unexpected issues
+            ApiResponse.Error(e.localizedMessage ?: "Unknown error")
         }
     }
 
