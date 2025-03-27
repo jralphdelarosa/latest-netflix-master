@@ -1,6 +1,7 @@
 package com.example.myfirstandroidtvapp.presentation.login
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -87,6 +88,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
+import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -99,15 +101,6 @@ import timber.log.Timber
 fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavController) {
     var isSignup by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val offsetX by animateDpAsState(
-        targetValue = if (isSignup) (-300).dp else 300.dp,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
-        label = "OffsetX Animation"
-    )
-    val alpha by animateFloatAsState(
-        targetValue = if (isSignup) 1f else 1f,
-        animationSpec = tween(durationMillis = 500), label = "Alpha Animation"
-    )
 
     Column(
         modifier = Modifier
@@ -161,8 +154,14 @@ fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavCo
         ) {
             this@Column.AnimatedVisibility(
                 visible = !isSignup,
-                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
+                enter = slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(durationMillis = 500)),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(durationMillis = 300))
             ) {
                 LoginScreen(
                     loginViewModel = loginViewModel,
@@ -172,10 +171,16 @@ fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavCo
 
             this@Column.AnimatedVisibility(
                 visible = isSignup,
-                enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                enter = slideInHorizontally(
+                    initialOffsetX = { -it },
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(durationMillis = 500)),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(durationMillis = 300))
             ) {
-                RegistrationScreen(navController)
+                RegistrationScreen(loginViewModel, navController)
             }
         }
 
@@ -185,7 +190,10 @@ fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavCo
         ) {
             Button(
                 onClick = { navController.navigate("home") },
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier
+                    .width(200.dp)
+                    .padding(bottom = 20.dp)
+                ,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
             ) {
                 Text("Watch as Guest", color = Color.White)
@@ -364,9 +372,11 @@ fun LoginScreen(
 }
 
 @Composable
-fun RegistrationScreen(navController: NavController) {
+fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val registrationState by loginViewModel.registerState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -402,7 +412,9 @@ fun RegistrationScreen(navController: NavController) {
                         placeholder = "Enter your password"
                     )
                     Button(
-                        onClick = {},
+                        onClick = {
+                            loginViewModel.register(email,password)
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -459,6 +471,28 @@ fun RegistrationScreen(navController: NavController) {
                 }
             }
         }
+    }
+
+    when (registrationState) {
+        is ApiResult.Loading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black), // Keeps background consistent
+                contentAlignment = Alignment.Center // Centers the loader
+            ) {
+                CircularLogoWithLoadingRing()
+            }
+        }
+        is ApiResult.Success -> {
+            Toast.makeText(LocalContext.current, "Registration successful!", Toast.LENGTH_LONG).show()
+            navController.navigate("home") // Navigate to home on success
+        }
+        is ApiResult.Error -> {
+            val errorMessage = (registrationState as ApiResult.Error).message
+            Text(errorMessage, color = Color.Red, fontSize = 14.sp)
+        }
+        else -> {}
     }
 }
 

@@ -68,6 +68,9 @@ fun HomeScreen(loginViewModel: LoginViewModel, navController: NavController) {
     // Observe logout state
     val loginState by loginViewModel.loginState.collectAsState()
 
+    //set registerState to idle
+    loginViewModel.registerStateSetIdle()
+
     // Navigate to login if logged out
     LaunchedEffect(loginState) {
         if (TvCoreApplication.isUserLoggedIn.value == true) {
@@ -264,7 +267,7 @@ fun GoToLoginDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Logout",
+                    text = "Proceed with Login",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,

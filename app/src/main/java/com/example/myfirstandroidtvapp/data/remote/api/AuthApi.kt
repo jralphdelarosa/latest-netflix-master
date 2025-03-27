@@ -6,9 +6,12 @@ import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.QrCodeResponse
+import com.example.myfirstandroidtvapp.data.remote.dto.RegisterResponse
 import com.example.myfirstandroidtvapp.data.remote.request.AutoLoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.LoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.RefreshTokenRequest
+import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -28,10 +31,16 @@ sealed class ApiResponse<out T> {
 
 interface AuthApi {
     @POST("clients/auth/{tenantId}/login/")
-    suspend fun doServerLoginApiCall(
+    suspend fun login(
         @Path("tenantId") tenantId: String,
         @Body request: LoginRequest
     ): LoginResponse
+
+    @POST("clients/auth/{tenant_id}/register/")
+    suspend fun register(
+        @Path("tenant_id") tenantId: String,
+        @Body request: RegisterRequest
+    ): Response<RegisterResponse>
 
     @POST("auth/refresh/")
     suspend fun refreshToken(

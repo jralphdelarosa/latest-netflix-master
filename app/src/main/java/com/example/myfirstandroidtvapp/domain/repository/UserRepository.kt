@@ -6,6 +6,8 @@ import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.QrCodeResponse
+import com.example.myfirstandroidtvapp.data.remote.dto.RegisterResponse
+import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 
 /**
@@ -13,6 +15,7 @@ import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
  */
 interface UserRepository {
     suspend fun login(email: String, password: String): ApiResponse<LoginResponse>
+    suspend fun register(request: RegisterRequest): ApiResult<RegisterResponse>
     suspend fun refreshToken(): ApiResponse<LoginResponse>
     suspend fun getConfig(): ApiResponse<ConfigResponse>
     suspend fun loadCustomCMSConfig(): ApiResponse<CustomDomainConfigResponse>

@@ -16,9 +16,12 @@ import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.QrCodeResponse
+import com.example.myfirstandroidtvapp.data.remote.dto.RegisterResponse
 import com.example.myfirstandroidtvapp.data.remote.request.AutoLoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.LoginRequest
 import com.example.myfirstandroidtvapp.data.remote.request.RefreshTokenRequest
+import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
+import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
 import com.google.gson.Gson
 import timber.log.Timber
@@ -56,7 +59,7 @@ class UserRepositoryImpl @Inject constructor(
             Timber.tag("LoginRequest").d(Gson().toJson(request))
 
             // Call API and wrap response
-            val response = authApi.doServerLoginApiCall(ApiEndPoint.TENANT_ID, request)
+            val response = authApi.login(ApiEndPoint.TENANT_ID, request)
             ApiResponse.Success(response)
 
         } catch (e: HttpException) {
@@ -67,6 +70,24 @@ class UserRepositoryImpl @Inject constructor(
 
         } catch (e: Exception) {  // Handles any unexpected issues
             ApiResponse.Error(e.localizedMessage ?: "Unknown error")
+        }
+    }
+
+    override suspend fun register(request: RegisterRequest): ApiResult<RegisterResponse> {
+        return try {
+            val response = authApi.register(ApiEndPoint.TENANT_ID, request)
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                if (responseBody != null) {
+                    ApiResult.Success(responseBody)
+                } else {
+                    ApiResult.Error("Empty response body")
+                }
+            } else {
+                ApiResult.Error(response.errorBody()?.string() ?: "Unknown error")
+            }
+        } catch (e: Exception) {
+            ApiResult.Error("An unexpected error occurred", e)
         }
     }
 

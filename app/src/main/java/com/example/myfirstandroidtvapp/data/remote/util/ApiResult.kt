@@ -6,5 +6,7 @@ package com.example.myfirstandroidtvapp.data.remote.util
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
     data class Error(val message: String, val throwable: Throwable? = null) : ApiResult<Nothing>()
+    data class Exception(val exception: Throwable) : ApiResult<Nothing>()
     object Loading : ApiResult<Nothing>()
+    object Idle : ApiResult<Nothing>()
 }
