@@ -4,11 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.http.HttpException
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresExtension
 import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
-import com.example.myfirstandroidtvapp.data.remote.ApiEndPoint
+import com.example.myfirstandroidtvapp.data.remote.ApiConstants
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
 import com.example.myfirstandroidtvapp.data.remote.api.AuthApi
 import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
@@ -24,6 +23,7 @@ import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
 import com.google.gson.Gson
+import okhttp3.Response
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
@@ -59,8 +59,16 @@ class UserRepositoryImpl @Inject constructor(
             Timber.tag("LoginRequest").d(Gson().toJson(request))
 
             // Call API and wrap response
-            val response = authApi.login(ApiEndPoint.TENANT_ID, request)
-            ApiResponse.Success(response)
+            val response = authApi.login(ApiConstants.TENANT_ID, request)
+
+            return if (response.token?.access?.isNotEmpty() == true && response.token.refresh.isNotEmpty()) {
+                // Store tokens after successful login
+                userPref.setAccessToken(response.token.access)
+                userPref.setRefreshToken(response.token.refresh)
+                ApiResponse.Success(response)
+            } else {
+                ApiResponse.Error("Invalid login response, missing access or refresh token")
+            }
 
         } catch (e: HttpException) {
             Timber.tag("LoginAPI").e("HTTP Exception: ${e.message}")
@@ -75,7 +83,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun register(request: RegisterRequest): ApiResult<RegisterResponse> {
         return try {
-            val response = authApi.register(ApiEndPoint.TENANT_ID, request)
+            val response = authApi.register(ApiConstants.TENANT_ID, request)
             if (response.isSuccessful) {
                 val responseBody = response.body()
                 if (responseBody != null) {
@@ -122,7 +130,7 @@ class UserRepositoryImpl @Inject constructor(
             val response = authApi.refreshToken(RefreshTokenRequest(refreshToken))
             if (response is ApiResponse.Success) {
                 response.data.let { loginResponse ->
-                    updateToken(loginResponse.accessToken, loginResponse.refreshToken) // Store new tokens
+                    updateToken(loginResponse.token?.access, loginResponse.token?.refresh) // Store new tokens
                 }
             }
             response
@@ -219,7 +227,7 @@ class UserRepositoryImpl @Inject constructor(
                 }
             }
             if (it.paymentWebsiteType != null) {
-                ApiEndPoint.PAYMENT_WEBSITE_TYPE = it.paymentWebsiteType!!
+                ApiConstants.PAYMENT_WEBSITE_TYPE = it.paymentWebsiteType!!
             }
         }
         config.packageInfo.externalUrls?.let {
@@ -256,7 +264,7 @@ class UserRepositoryImpl @Inject constructor(
             3 -> "/play-audio.html?categoryId=${categoryId}%26videoId=${id}%26isOrderProcessing=true"
             else -> ""
         }
-        var baseCMSURL = ApiEndPoint.BASE_CMS_URL + "clients/${userPref.getTemplateId()}"
+        var baseCMSURL = ApiConstants.BASE_CMS_URL + "clients/${userPref.getTemplateId()}"
         TvCoreApplication.sites[template]?.domain?.let {
             if (it.isNotEmpty()) {
                 baseCMSURL = "https://$it"

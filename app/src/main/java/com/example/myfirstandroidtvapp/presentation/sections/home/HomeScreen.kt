@@ -127,7 +127,7 @@ fun HomeScreen(loginViewModel: LoginViewModel, navController: NavController) {
             ) {
                 when (lastSelectedItem) {
                     NavItem.Search -> SearchScreen()
-                    NavItem.Dashboard -> DashBoardScreen(navController)
+                    NavItem.Dashboard -> DashBoardScreen(navController = navController)
                     NavItem.Movies -> MovieScreen()
                     NavItem.Series -> SeriesScreen()
                     NavItem.Settings -> SettingsScreen()

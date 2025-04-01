@@ -104,6 +104,7 @@ dependencies {
     // ExoPlayer for video playback
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.exoplayer.hls)
 
     //noinspection GradleDependency
     implementation(libs.androidx.webkit)

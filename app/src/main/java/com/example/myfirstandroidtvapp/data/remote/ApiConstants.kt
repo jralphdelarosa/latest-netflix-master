@@ -3,19 +3,19 @@ package com.example.myfirstandroidtvapp.data.remote
 /**
  * Created by John Ralph Dela Rosa on 3/23/2025.
  */
-object ApiEndPoint {
-    const val API_BASE: String = "https://api.tvstartupcms.com/api/v1"
+object ApiConstants {
+    const val API_BASE: String = "https://api.tvstartupcms.com/api/v1/"
     const val API_V3_BASE: String = "https://api.tvstartupcms.com/api/v3/"
 
     const val BASE_CMS_URL = "https://tvstartupcms.com/"
-    const val TENANT_ID: String = "dfdfad8b-1cd8-4c44-817f-b3dc10838dae"
+    const val TENANT_ID: String = "983cb963-5497-4ba7-b536-1bde89f10acb"
 
     var PAYMENT_WEBSITE_TYPE = 1
 
     object Auth {
-        const val LOGIN = "${API_V3_BASE}clients/auth/$TENANT_ID/login/"
-        const val AUTO_LOGIN = "${API_V3_BASE}clients/auth/$TENANT_ID/auto-login/"
-        const val REFRESH = "$API_BASE/auth/refresh/"
+        const val LOGIN = "clients/auth/$TENANT_ID/login/"
+        const val AUTO_LOGIN = "clients/auth/$TENANT_ID/auto-login/"
+        const val REFRESH = "auth/refresh/"
     }
 
     object Config {

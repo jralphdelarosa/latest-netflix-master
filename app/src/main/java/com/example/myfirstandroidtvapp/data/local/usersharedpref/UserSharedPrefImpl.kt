@@ -2,6 +2,7 @@ package com.example.myfirstandroidtvapp.data.local.usersharedpref
 
 import android.content.Context
 import android.content.SharedPreferences
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,10 +18,14 @@ class UserSharedPrefImpl @Inject constructor(
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(prefFileName, Context.MODE_PRIVATE)
 
-    override fun getAccessToken(): String? =
-        sharedPreferences.getString(PREF_KEY_ACCESS_TOKEN, null)
+    override fun getAccessToken(): String? {
+        val token = sharedPreferences.getString(PREF_KEY_ACCESS_TOKEN, null)
+        Timber.d("UserSharedPrefImpl Getting Access Token: $token")
+        return token
+    }
 
     override fun setAccessToken(accessToken: String?) {
+
         accessToken?.takeIf { it != "Bearer null" }?.let {
             sharedPreferences.edit().putString(PREF_KEY_ACCESS_TOKEN, it).apply()
         } ?: run {
