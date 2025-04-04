@@ -15,18 +15,24 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -45,6 +52,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +62,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
@@ -76,10 +85,53 @@ fun DashBoardScreen(viewModel: VodViewModel = hiltViewModel(), navController: Na
 @Composable
 fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
     val vodCategories by viewModel.vodCategories.collectAsState()
+    var focusedTrailerUrl by remember { mutableStateOf("") } // Store focused trailer URL
+    var focusedThumbnail by remember { mutableStateOf("") }
+    var focusedTitle by remember { mutableStateOf("") }
+    var focusedDescription by remember { mutableStateOf("") }
+
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 100.dp, start = 10.dp)
+                .zIndex(2f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(LocalConfiguration.current.screenWidthDp.dp / 2) // Limit width to half the screen
+                    .padding(16.dp) // Padding for better spacing
+            ) {
+                // Video Title
+                Text(
+                    text = focusedTitle,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                )
+
+                // Video Description
+                Text(
+                    text = focusedDescription,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
         vodCategories?.fold(
             onSuccess = { categories ->
                 if (categories.results.isNotEmpty()) {
@@ -87,7 +139,9 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter) // Push to the bottom
-                            .height(200.dp) // Restrict height to one row visibility
+                            .height(300.dp) // Restrict height to one row visibility
+                            .padding(bottom = 16.dp)
+                            .zIndex(1f)
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
@@ -98,18 +152,18 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = 16.dp),
+                                        .padding(start = 10.dp, end = 16.dp, bottom = 16.dp, top = 16.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     // Category Title
                                     Text(
                                         text = category.title,
-                                        fontSize = 24.sp,
+                                        fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
+                                            .padding(bottom = 10.dp)
                                     )
 
                                     // Video Thumbnails in Row
@@ -118,7 +172,19 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         items(category.videos ?: emptyList()) { video ->
-                                            VideoThumbnail(video, viewModel)
+                                            VideoThumbnail(
+                                                video = video,
+                                                viewModel = viewModel,
+                                                onFocusChanged = { vod ->
+                                                    focusedTrailerUrl =
+                                                        vod?.trailer?.url
+                                                            ?: "" // Update focused trailer
+                                                    focusedThumbnail = vod?.thumbnail.toString()
+                                                    focusedTitle = vod?.title.toString()
+                                                    focusedDescription = vod?.description.toString()
+
+                                                }
+                                            )
                                         }
                                     }
                                 }
@@ -139,41 +205,58 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                 )
             }
         ) ?: CircularLogoWithLoadingRing()
+
+        // VIDEO PREVIEW with BLACK GRADIENT COVER
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .fillMaxHeight(0.4f)
+                .align(Alignment.TopEnd)
+                .zIndex(4f)
+        ) {
+            VideoPlayer(url = focusedTrailerUrl, thumbnail = focusedThumbnail)
+
+            // Black fading overlay IN FRONT of video
+
+        }
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.7f),
+                            Color.Transparent
+                        )
+                    )
+                )
+                .zIndex(3f)
+        )
     }
 }
 
 
-
 @Composable
-fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel) {
+fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (VodVideo?) -> Unit) {
     var isFocused by remember { mutableStateOf(false) }
     Timber.tag("video").d(video?.thumbnail)
 
-    Box(
+    Card(
         modifier = Modifier
-            .size(200.dp, 100.dp)
+            .size(if(isFocused) 160.dp else 145.dp, if(isFocused) 260.dp else 235.dp)
             .onFocusChanged { focusState ->
+                if (focusState.hasFocus) {
+                    onFocusChanged(video) // Send trailer URL to parent
+                }
                 isFocused = focusState.hasFocus // Update focus state
             }
-            .border(
-                width = 2.dp,  // Increase the border width for better visibility
-                color = if (isFocused) Color.Red else Color.Transparent // Red border when focused, transparent otherwise
-            )
-            .background(Color.Black) // Use a background to contrast with the border
             .clickable {
                 // Handle click here
             }
-            .zIndex(1f) // Ensure it's on top
+            .zIndex(1f),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        // Check if video.trailer is null and fallback to a logo
-
-        /*if (isFocused && video?.trailer != null) {
-            // If focused and trailer URL is available, show VideoPlayer
-            val trailer = video.trailer.url
-            if (trailer.isNotEmpty()) {
-                VideoPlayer(video.trailer.url)
-            }
-        }*/
 
         // Use rememberAsyncImagePainter to load the thumbnail image
         val imagePainter = rememberAsyncImagePainter(
@@ -190,23 +273,83 @@ fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel) {
             painter = imagePainter,
             contentDescription = video?.title,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Crop
         )
     }
 }
 
 
 @Composable
-fun VideoPlayer(url: String) {
-    AndroidView(factory = { context ->
-        PlayerView(context).apply {
-            player = ExoPlayer.Builder(context).build().apply {
-                setMediaItem(MediaItem.fromUri(url))
-                prepare()
-                play()
+fun VideoPlayer(url: String?, thumbnail: String?) {
+    val context = LocalContext.current
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = Player.REPEAT_MODE_ONE // Loop video
+            volume = 0f // Mute video
+            playWhenReady = true // Auto-play
+        }
+    }
+
+    var isVideoPlaying by remember { mutableStateOf(false) } // Track video playback state
+
+    if (!url.isNullOrEmpty()) {
+        LaunchedEffect(url) {
+            val mediaItem = MediaItem.fromUri(url)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+            exoPlayer.play()
+        }
+
+        DisposableEffect(Unit) {
+            exoPlayer.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    isVideoPlaying =
+                        state == Player.STATE_READY // Hide thumbnail when video is ready
+                }
+            })
+
+            onDispose {
+                exoPlayer.release()
             }
         }
-    })
+    } else {
+        // Show Logo if URL is Empty
+        Image(
+            painter = rememberAsyncImagePainter(
+                model = thumbnail ?: R.drawable.logo,
+                error = painterResource(R.drawable.logo)
+            ), // Replace with your logo resource
+            contentDescription = "App Logo",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit // Fill the screen with the logo
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Show Video when playing
+        AndroidView(
+            factory = {
+                PlayerView(it).apply {
+                    player = exoPlayer
+                    useController = false
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Show Thumbnail while loading
+        if (!isVideoPlaying) {
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = thumbnail ?: R.drawable.logo, // Fallback to logo
+                    error = painterResource(R.drawable.logo)
+                ),
+                contentDescription = "Thumbnail",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+        }
+    }
 }
 
 @Composable
