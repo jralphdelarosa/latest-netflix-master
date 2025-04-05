@@ -141,7 +141,7 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                             .align(Alignment.BottomCenter) // Push to the bottom
                             .height(300.dp) // Restrict height to one row visibility
                             .padding(bottom = 16.dp)
-                            .zIndex(1f)
+                            .zIndex(3f)
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
@@ -152,7 +152,12 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = 10.dp, end = 16.dp, bottom = 16.dp, top = 16.dp),
+                                        .padding(
+                                            start = 10.dp,
+                                            end = 16.dp,
+                                            bottom = 16.dp,
+                                            top = 16.dp
+                                        ),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     // Category Title
@@ -209,30 +214,13 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
         // VIDEO PREVIEW with BLACK GRADIENT COVER
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .fillMaxHeight(0.4f)
+                .fillMaxWidth(0.7f)
+                .fillMaxHeight(0.68f)
                 .align(Alignment.TopEnd)
-                .zIndex(4f)
+                .zIndex(1f)
         ) {
             VideoPlayer(url = focusedTrailerUrl, thumbnail = focusedThumbnail)
-
-            // Black fading overlay IN FRONT of video
-
         }
-
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.7f),
-                            Color.Transparent
-                        )
-                    )
-                )
-                .zIndex(3f)
-        )
     }
 }
 
@@ -244,7 +232,7 @@ fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (V
 
     Card(
         modifier = Modifier
-            .size(if(isFocused) 160.dp else 145.dp, if(isFocused) 260.dp else 235.dp)
+            .size(if (isFocused) 160.dp else 145.dp, if (isFocused) 260.dp else 235.dp)
             .onFocusChanged { focusState ->
                 if (focusState.hasFocus) {
                     onFocusChanged(video) // Send trailer URL to parent
@@ -312,20 +300,13 @@ fun VideoPlayer(url: String?, thumbnail: String?) {
                 exoPlayer.release()
             }
         }
-    } else {
-        // Show Logo if URL is Empty
-        Image(
-            painter = rememberAsyncImagePainter(
-                model = thumbnail ?: R.drawable.logo,
-                error = painterResource(R.drawable.logo)
-            ), // Replace with your logo resource
-            contentDescription = "App Logo",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit // Fill the screen with the logo
-        )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = Color.Red)
+    ) {
         // Show Video when playing
         AndroidView(
             factory = {
@@ -335,10 +316,13 @@ fun VideoPlayer(url: String?, thumbnail: String?) {
                 }
             },
             modifier = Modifier.fillMaxSize()
+                .background(
+                    color = Color.White
+                )
         )
 
         // Show Thumbnail while loading
-        if (!isVideoPlaying) {
+        if (!isVideoPlaying || url.isNullOrEmpty()) {
             Image(
                 painter = rememberAsyncImagePainter(
                     model = thumbnail ?: R.drawable.logo, // Fallback to logo
