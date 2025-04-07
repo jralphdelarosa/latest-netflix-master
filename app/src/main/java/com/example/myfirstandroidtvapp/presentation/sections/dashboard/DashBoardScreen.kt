@@ -412,7 +412,7 @@ fun NetflixStyleOverlay() {
                                 Color.Transparent,
                                 Color.Black
                             ),
-                            startY = boxSize.height * 0.4f,
+                            startY = boxSize.height * 0.5f,
                             endY = boxSize.height * 0.6f
                         )
                     )
