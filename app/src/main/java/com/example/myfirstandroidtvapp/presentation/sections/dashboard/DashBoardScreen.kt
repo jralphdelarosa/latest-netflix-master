@@ -1,7 +1,10 @@
 package com.example.myfirstandroidtvapp.presentation.sections.dashboard
 
+import androidx.annotation.OptIn
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -14,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -42,20 +46,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -63,7 +78,9 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -72,6 +89,8 @@ import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.data.remote.dto.VodVideo
+import com.example.myfirstandroidtvapp.presentation.login.CircularLogoWithLoadingRing
+import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @Composable
@@ -98,13 +117,12 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp, start = 10.dp)
-                .zIndex(2f)
+                .padding(start = 20.dp, top = 40.dp)
+                .zIndex(3f)
         ) {
             Column(
                 modifier = Modifier
                     .width(LocalConfiguration.current.screenWidthDp.dp / 2) // Limit width to half the screen
-                    .padding(16.dp) // Padding for better spacing
             ) {
                 // Video Title
                 Text(
@@ -139,9 +157,8 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter) // Push to the bottom
-                            .height(300.dp) // Restrict height to one row visibility
-                            .padding(bottom = 16.dp)
-                            .zIndex(3f)
+                            .height(230.dp) // Restrict height to one row visibility
+                            .zIndex(4f)
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
@@ -153,10 +170,9 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(
-                                            start = 10.dp,
+                                            start = 20.dp,
                                             end = 16.dp,
-                                            bottom = 16.dp,
-                                            top = 16.dp
+                                            bottom = 10.dp
                                         ),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
@@ -209,13 +225,28 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
-        ) ?: CircularLogoWithLoadingRing()
+        ) ?: Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(4f),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularLogoWithLoadingRing()
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(2f)
+        ) {
+            NetflixStyleOverlay()
+        }
 
         // VIDEO PREVIEW with BLACK GRADIENT COVER
         Box(
             modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .fillMaxHeight(0.68f)
+                .fillMaxWidth(0.77f)
+                .fillMaxHeight(0.737f)
                 .align(Alignment.TopEnd)
                 .zIndex(1f)
         ) {
@@ -232,7 +263,7 @@ fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (V
 
     Card(
         modifier = Modifier
-            .size(if (isFocused) 160.dp else 145.dp, if (isFocused) 260.dp else 235.dp)
+            .size(if (isFocused) 120.dp else 110.dp, if (isFocused) 180.dp else 165.dp)
             .onFocusChanged { focusState ->
                 if (focusState.hasFocus) {
                     onFocusChanged(video) // Send trailer URL to parent
@@ -243,7 +274,7 @@ fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (V
                 // Handle click here
             }
             .zIndex(1f),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(6.dp)
     ) {
 
         // Use rememberAsyncImagePainter to load the thumbnail image
@@ -267,6 +298,7 @@ fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (V
 }
 
 
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(url: String?, thumbnail: String?) {
     val context = LocalContext.current
@@ -312,10 +344,12 @@ fun VideoPlayer(url: String?, thumbnail: String?) {
             factory = {
                 PlayerView(it).apply {
                     player = exoPlayer
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                     useController = false
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .background(
                     color = Color.White
                 )
@@ -337,45 +371,54 @@ fun VideoPlayer(url: String?, thumbnail: String?) {
 }
 
 @Composable
-fun CircularLogoWithLoadingRing() {
-    val infiniteTransition = rememberInfiniteTransition()
-
-    // Animate the rotation of the outer ring
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-    )
+fun NetflixStyleOverlay() {
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.size(100.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                boxSize = coordinates.size // captures width & height in pixels
+            }
     ) {
-        // Circular Logo
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Loading",
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape) // Makes the image circular
-        )
+        // Background (e.g. image or video)
 
-        // Loading Ring
-        Canvas(
-            modifier = Modifier
-                .size(80.dp) // Slightly larger than the logo
-                .rotate(rotation) // Rotates the progress ring
-        ) {
-            drawArc(
-                color = Color.Red, // Netflix theme color
-                startAngle = 0f,
-                sweepAngle = 270f, // Creates an incomplete circle effect
-                useCenter = false,
-                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+        // Horizontal Gradient (left → right)
+        if (boxSize.width > 0) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Black,
+                                Color.Transparent
+                            ),
+                            startX = boxSize.width * 0.3f,
+                            endX = boxSize.width * 0.6f
+                        )
+                    )
+            )
+        }
+
+        // Vertical Gradient (top → bottom)
+        if (boxSize.height > 0) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black
+                            ),
+                            startY = boxSize.height * 0.4f,
+                            endY = boxSize.height * 0.6f
+                        )
+                    )
             )
         }
     }
 }
+
+
