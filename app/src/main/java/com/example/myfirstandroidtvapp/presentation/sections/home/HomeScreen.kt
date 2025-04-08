@@ -48,6 +48,7 @@ import com.example.myfirstandroidtvapp.presentation.NavItem
 import com.example.myfirstandroidtvapp.presentation.login.LoginState
 import com.example.myfirstandroidtvapp.presentation.login.LoginViewModel
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.DashBoardScreen
+import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
 import com.example.myfirstandroidtvapp.presentation.sections.home.sidebar.Sidebar
 import com.example.myfirstandroidtvapp.presentation.sections.movies.MovieScreen
 import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
@@ -56,7 +57,7 @@ import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsSc
 
 
 @Composable
-fun HomeScreen(loginViewModel: LoginViewModel, navController: NavController) {
+fun HomeScreen(vodViewModel: VodViewModel, loginViewModel: LoginViewModel, navController: NavController) {
     val context = LocalContext.current
 
     var lastSelectedItem by remember { mutableStateOf(NavItem.Dashboard) }
@@ -127,7 +128,7 @@ fun HomeScreen(loginViewModel: LoginViewModel, navController: NavController) {
             ) {
                 when (lastSelectedItem) {
                     NavItem.Search -> SearchScreen()
-                    NavItem.Dashboard -> DashBoardScreen(navController = navController)
+                    NavItem.Dashboard -> DashBoardScreen(viewModel = vodViewModel, navController = navController)
                     NavItem.Movies -> MovieScreen()
                     NavItem.Series -> SeriesScreen()
                     NavItem.Settings -> SettingsScreen()

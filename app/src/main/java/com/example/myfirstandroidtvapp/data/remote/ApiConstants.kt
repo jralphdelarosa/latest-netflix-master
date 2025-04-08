@@ -8,7 +8,7 @@ object ApiConstants {
     const val API_V3_BASE: String = "https://api.tvstartupcms.com/api/v3/"
 
     const val BASE_CMS_URL = "https://tvstartupcms.com/"
-    const val TENANT_ID: String = "983cb963-5497-4ba7-b536-1bde89f10acb"
+    const val TENANT_ID: String = "e19a54df-1580-4b83-afc3-e062ef77af40"
 
     var PAYMENT_WEBSITE_TYPE = 1
 

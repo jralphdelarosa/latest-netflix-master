@@ -1,23 +1,11 @@
 package com.example.myfirstandroidtvapp.presentation.sections.dashboard
 
 import androidx.annotation.OptIn
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -30,8 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
@@ -45,31 +31,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,26 +53,24 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.myfirstandroidtvapp.R
+import com.example.myfirstandroidtvapp.data.remote.dto.VodCategory
 import com.example.myfirstandroidtvapp.data.remote.dto.VodVideo
 import com.example.myfirstandroidtvapp.presentation.login.CircularLogoWithLoadingRing
-import kotlinx.coroutines.delay
-import timber.log.Timber
 
 @Composable
-fun DashBoardScreen(viewModel: VodViewModel = hiltViewModel(), navController: NavController) {
+fun DashBoardScreen(viewModel: VodViewModel, navController: NavController) {
     LaunchedEffect(Unit) {
         viewModel.fetchVodCategories()
     }
-    VideoDashboard(viewModel)
+    VideoDashboard(viewModel, navController)
 }
 
 @Composable
-fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
+fun VideoDashboard(viewModel: VodViewModel = hiltViewModel(), navController: NavController) {
     val vodCategories by viewModel.vodCategories.collectAsState()
     var focusedTrailerUrl by remember { mutableStateOf("") } // Store focused trailer URL
     var focusedThumbnail by remember { mutableStateOf("") }
@@ -157,7 +125,7 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter) // Push to the bottom
-                            .height(230.dp) // Restrict height to one row visibility
+                            .height(220.dp) // Restrict height to one row visibility
                             .zIndex(4f)
                     ) {
                         LazyColumn(
@@ -190,22 +158,49 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
                                     // Video Thumbnails in Row
                                     LazyRow(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(20.dp)
                                     ) {
-                                        items(category.videos ?: emptyList()) { video ->
-                                            VideoThumbnail(
-                                                video = video,
-                                                viewModel = viewModel,
-                                                onFocusChanged = { vod ->
-                                                    focusedTrailerUrl =
-                                                        vod?.trailer?.url
-                                                            ?: "" // Update focused trailer
-                                                    focusedThumbnail = vod?.thumbnail.toString()
-                                                    focusedTitle = vod?.title.toString()
-                                                    focusedDescription = vod?.description.toString()
+                                        if (category.children.isNotEmpty()) {
+                                            item {
+                                                VideoThumbnail(
+                                                    type = category.type,
+                                                    childrenThumbnail = category.thumbnail,
+                                                    video = null,
+                                                    vodCategory = category,
+                                                    viewModel = viewModel,
+                                                    onFocusChanged = { video, category ->
+                                                        focusedThumbnail =
+                                                            category?.thumbnail.toString()
+                                                        focusedTitle =
+                                                            category?.title.toString()
+                                                        focusedDescription =
+                                                            category?.longDescription.toString()
+                                                    },
+                                                    navController = navController
+                                                )
+                                            }
 
-                                                }
-                                            )
+                                        } else {
+                                            items(category.videos ?: emptyList()) { video ->
+                                                VideoThumbnail(
+                                                    type = category.type,
+                                                    video = video,
+                                                    vodCategory = null,
+                                                    viewModel = viewModel,
+                                                    onFocusChanged = { vod, vodCategory ->
+                                                        focusedTrailerUrl =
+                                                            vod?.trailer?.url
+                                                                ?: "" // Update focused trailer
+                                                        focusedThumbnail =
+                                                            vod?.thumbnail.toString()
+                                                        focusedTitle = vod?.title.toString()
+                                                        focusedDescription =
+                                                            vod?.description.toString()
+
+                                                    },
+                                                    navController = navController
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -257,46 +252,77 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel()) {
 
 
 @Composable
-fun VideoThumbnail(video: VodVideo?, viewModel: VodViewModel, onFocusChanged: (VodVideo?) -> Unit) {
+fun VideoThumbnail(
+    type: String = "",
+    childrenThumbnail: String = "",
+    video: VodVideo?,
+    vodCategory: VodCategory?,
+    viewModel: VodViewModel,
+    onFocusChanged: (VodVideo?, VodCategory?) -> Unit,
+    navController: NavController
+) {
     var isFocused by remember { mutableStateOf(false) }
-    Timber.tag("video").d(video?.thumbnail)
 
     Card(
         modifier = Modifier
-            .size(if (isFocused) 120.dp else 110.dp, if (isFocused) 180.dp else 165.dp)
+            .size(if (isFocused) 120.dp else 110.dp, if (isFocused) 185.dp else 180.dp)
             .onFocusChanged { focusState ->
                 if (focusState.hasFocus) {
-                    onFocusChanged(video) // Send trailer URL to parent
+                    onFocusChanged(video, vodCategory)
                 }
-                isFocused = focusState.hasFocus // Update focus state
+                isFocused = focusState.hasFocus
             }
             .clickable {
-                // Handle click here
+                if(video!=null) {
+                    viewModel.selectedMovie = video
+                    navController.navigate("video_details")
+                }
             }
             .zIndex(1f),
         shape = RoundedCornerShape(6.dp)
     ) {
+        // Use a Box to stack the image and the Series tag
+        Box(modifier = Modifier.fillMaxSize()) {
 
-        // Use rememberAsyncImagePainter to load the thumbnail image
-        val imagePainter = rememberAsyncImagePainter(
-            model = ImageRequest.Builder(LocalContext.current) // Create the ImageRequest
-                .data(video?.thumbnail) // Assign the URL for the image
-                .crossfade(true) // Optional: Enable crossfade transition when loading the image
-                .placeholder(R.drawable.logo) // Optional: Show a placeholder while loading
-                .error(R.drawable.logo) // Optional: Show an error image if loading fails
-                .build()
-        )
+            // Thumbnail image
+            val imagePainter = rememberAsyncImagePainter(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(childrenThumbnail.ifEmpty { video?.thumbnail })
+                    .crossfade(true)
+                    .placeholder(R.drawable.logo)
+                    .error(R.drawable.logo)
+                    .build()
+            )
 
-        // Check if image is loaded successfully or not
-        Image(
-            painter = imagePainter,
-            contentDescription = video?.title,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+            Image(
+                painter = imagePainter,
+                contentDescription = video?.title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // SERIES TAG - Only shown if type == "series"
+            if (type.lowercase() == "series") {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .background(
+                            Color.Red.copy(alpha = 0.85f),
+                            shape = RoundedCornerShape(bottomEnd = 6.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "Series",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }
-
 
 @OptIn(UnstableApi::class)
 @Composable
