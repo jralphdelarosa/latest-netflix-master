@@ -631,6 +631,7 @@ fun CircularLogoWithLoadingRing() {
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape) // Makes the image circular
+                .background(color = Color.Black)
         )
 
         // Loading Ring
