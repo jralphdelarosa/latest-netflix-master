@@ -53,7 +53,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.myfirstandroidtvapp.R
@@ -63,9 +62,7 @@ import com.example.myfirstandroidtvapp.presentation.login.CircularLogoWithLoadin
 
 @Composable
 fun DashBoardScreen(viewModel: VodViewModel, navController: NavController) {
-    LaunchedEffect(Unit) {
-        viewModel.fetchVodCategories()
-    }
+
     VideoDashboard(viewModel, navController)
 }
 
@@ -125,7 +122,7 @@ fun VideoDashboard(viewModel: VodViewModel = hiltViewModel(), navController: Nav
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter) // Push to the bottom
-                            .height(220.dp) // Restrict height to one row visibility
+                            .height(240.dp) // Restrict height to one row visibility
                             .zIndex(4f)
                     ) {
                         LazyColumn(
@@ -265,7 +262,7 @@ fun VideoThumbnail(
 
     Card(
         modifier = Modifier
-            .size(if (isFocused) 120.dp else 110.dp, if (isFocused) 185.dp else 180.dp)
+            .size(if (isFocused) 140.dp else 130.dp, if (isFocused) 210.dp else 200.dp)
             .onFocusChanged { focusState ->
                 if (focusState.hasFocus) {
                     onFocusChanged(video, vodCategory)

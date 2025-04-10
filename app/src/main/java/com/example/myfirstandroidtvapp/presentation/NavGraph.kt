@@ -15,6 +15,7 @@ import com.example.myfirstandroidtvapp.presentation.sections.movies.MovieScreen
 import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
 import com.example.myfirstandroidtvapp.presentation.sections.series.SeriesScreen
 import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsScreen
+import com.example.myfirstandroidtvapp.presentation.videoplayer.VideoPlayer
 
 @Composable
 fun AppNavigation() {
@@ -23,13 +24,14 @@ fun AppNavigation() {
     val vodViewModel: VodViewModel = hiltViewModel()
 
     NavHost(navController = navController, startDestination = "login") {
-        composable("login") { LoginRegistrationScreen(loginViewModel, navController) }
+        composable("login") { LoginRegistrationScreen(loginViewModel, vodViewModel, navController) }
         composable("home") { HomeScreen(vodViewModel, loginViewModel, navController) }
         composable("movies") { MovieScreen() }
         composable("dashboard") { DashBoardScreen(vodViewModel,navController) }
         composable("search") { SearchScreen() }
         composable("series") { SeriesScreen() }
         composable("settings") { SettingsScreen() }
-        composable("video_details") { MovieDetailScreen(vodViewModel) }
+        composable("video_details") { MovieDetailScreen(vodViewModel,navController) }
+        composable("video_player") { VideoPlayer(vodViewModel) }
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,8 +32,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -41,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.TvCoreApplication
@@ -57,7 +67,11 @@ import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsSc
 
 
 @Composable
-fun HomeScreen(vodViewModel: VodViewModel, loginViewModel: LoginViewModel, navController: NavController) {
+fun HomeScreen(
+    vodViewModel: VodViewModel,
+    loginViewModel: LoginViewModel,
+    navController: NavController
+) {
     val context = LocalContext.current
 
     var lastSelectedItem by remember { mutableStateOf(NavItem.Dashboard) }
@@ -71,6 +85,8 @@ fun HomeScreen(vodViewModel: VodViewModel, loginViewModel: LoginViewModel, navCo
 
     //set registerState to idle
     loginViewModel.registerStateSetIdle()
+
+    val focusRequester = remember { FocusRequester() }
 
     // Navigate to login if logged out
     LaunchedEffect(loginState) {
@@ -101,40 +117,53 @@ fun HomeScreen(vodViewModel: VodViewModel, loginViewModel: LoginViewModel, navCo
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.home_background),
-            contentDescription = "Background Image",
-            modifier = Modifier.matchParentSize(),
-            contentScale = ContentScale.Crop
-        )
+
 
         Box(
             modifier = Modifier
-                .matchParentSize()
-                .background(Color.Black.copy(alpha = 0.3f))
-        )
-        Row(modifier = Modifier.fillMaxSize()) {
+                .background(Color.Black.copy(alpha = 0.8f))
+                .zIndex(1f)
+                .onKeyEvent { keyEvent ->
+                    if (keyEvent.key == Key.DirectionRight && keyEvent.type == KeyEventType.KeyDown) {
+                        focusRequester.requestFocus()
+                        true
+                    } else {
+                        false
+                    }
+                }
+        ) {
             Sidebar(
                 navController = navController,
                 lastSelectedItem = lastSelectedItem,
                 onItemSelected = { lastSelectedItem = it }
             )
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
-            ) {
-                when (lastSelectedItem) {
-                    NavItem.Search -> SearchScreen()
-                    NavItem.Dashboard -> DashBoardScreen(viewModel = vodViewModel, navController = navController)
-                    NavItem.Movies -> MovieScreen()
-                    NavItem.Series -> SeriesScreen()
-                    NavItem.Settings -> SettingsScreen()
-                }
+
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(0f)
+                .focusable()
+                .focusRequester(focusRequester)
+                .padding(start = 25.dp)
+        ) {
+            when (lastSelectedItem) {
+                NavItem.Search -> SearchScreen()
+                NavItem.Dashboard -> DashBoardScreen(
+                    viewModel = vodViewModel,
+                    navController = navController
+                )
+
+                NavItem.Movies -> MovieScreen()
+                NavItem.Series -> SeriesScreen()
+                NavItem.Settings -> SettingsScreen()
             }
         }
+
 
         if (showLogoutDialog) {
             LogoutDialog(
@@ -146,7 +175,7 @@ fun HomeScreen(vodViewModel: VodViewModel, loginViewModel: LoginViewModel, navCo
             )
         }
 
-        if (showProceedToLoginDialog){
+        if (showProceedToLoginDialog) {
             GoToLoginDialog(
                 onConfirm = {
                     showProceedToLoginDialog = false

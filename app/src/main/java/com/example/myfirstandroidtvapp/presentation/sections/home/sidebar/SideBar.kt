@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.presentation.NavItem
@@ -82,7 +83,6 @@ fun Sidebar(
         modifier = Modifier
             .fillMaxHeight()
             .width(sidebarWidth)// Sidebar width
-            .background(Color.Black.copy(alpha = 0.3f))
             .onFocusChanged { focusState ->
                 isSidebarExpanded = focusState.hasFocus
             },
@@ -178,7 +178,7 @@ fun SidebarItem(
         .height(50.dp)
         .clickable(onClick = onClick)
         .background(
-            if (isFocused) Color.Red.copy(alpha = 0.8f) else Color.Transparent
+            if (isFocused) Color.Red.copy(alpha = 0.6f) else Color.Transparent
         ),
         horizontalArrangement = Arrangement.Center) {
 

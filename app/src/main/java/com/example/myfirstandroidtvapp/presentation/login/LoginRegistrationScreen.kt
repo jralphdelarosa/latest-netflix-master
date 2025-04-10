@@ -89,6 +89,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
+import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -98,7 +100,7 @@ import timber.log.Timber
 
 //sliding animation
 @Composable
-fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavController) {
+fun LoginRegistrationScreen(loginViewModel: LoginViewModel, vodViewModel: VodViewModel, navController: NavController) {
     var isSignup by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -165,6 +167,7 @@ fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavCo
             ) {
                 LoginScreen(
                     loginViewModel = loginViewModel,
+                    vodViewModel = vodViewModel,
                     navController = navController
                 )
             }
@@ -206,6 +209,7 @@ fun LoginRegistrationScreen(loginViewModel: LoginViewModel, navController: NavCo
 @Composable
 fun LoginScreen(
     loginViewModel: LoginViewModel,
+    vodViewModel: VodViewModel,
     navController: NavController
 ) {
 
@@ -213,16 +217,28 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
     val loginState by loginViewModel.loginState.collectAsState()
 
+    val vodCategories by vodViewModel.vodCategories.collectAsState()
+
+    LaunchedEffect(vodCategories) {
+        if (vodCategories?.isSuccess == true){
+            isLoading = false
+            navController.navigate("home")
+        } else if(vodCategories?.isFailure == false){
+            Toast.makeText(context, "Failed to fetch data!", Toast.LENGTH_LONG).show()
+        }
+    }
+
     LaunchedEffect(loginState) {
         when (loginState) {
             is LoginState.Success -> {
-                isLoading = false
-                navController.navigate("home")
+                vodViewModel.fetchVodCategories()
             }
 
             is LoginState.Error -> {

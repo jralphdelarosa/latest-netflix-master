@@ -10,5 +10,6 @@ data class VodVideo(
     @SerializedName("trailer") val trailer: TrailerResponse?,
     @SerializedName("title_logo") val titleLogo: String = "",
     @SerializedName("year_of_release") val yearRelease: String = "",
-    @SerializedName("duration") val duration: String = ""
+    @SerializedName("duration") val duration: String = "",
+    @SerializedName("url") val url: String? = null
 )

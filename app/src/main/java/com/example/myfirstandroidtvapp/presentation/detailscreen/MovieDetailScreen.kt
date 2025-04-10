@@ -1,8 +1,8 @@
 package com.example.myfirstandroidtvapp.presentation.detailscreen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,46 +10,61 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.tv.material3.Icon
 import coil.compose.AsyncImage
-import com.example.myfirstandroidtvapp.presentation.reusable.NetflixActionButton
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
+import timber.log.Timber
 
 @Composable
 fun MovieDetailScreen(
-    viewModel: VodViewModel
+    viewModel: VodViewModel,
+    navController: NavController
 ) {
     val video = viewModel.selectedMovie
-    val playButtonFocusRequester = remember { FocusRequester() }
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
-    LaunchedEffect(Unit) {
-        // Ensure the Play button gets focus when the screen loads
-        playButtonFocusRequester.requestFocus()
-    }
+    var isPlayBtnFocused by remember { mutableStateOf(false) }
+    var isAddToWatchListFocused by remember { mutableStateOf(false) }
 
-    LazyColumn(
+
+    Column (
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .focusable(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .onGloballyPositioned { coordinates ->
+                boxSize = coordinates.size // captures width & height in pixels
+            }
     ) {
-        item {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+
             // Poster / Backdrop Image
             AsyncImage(
                 model = video?.thumbnail,
@@ -57,12 +72,30 @@ fun MovieDetailScreen(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(400.dp)
             )
-        }
 
-        item {
-            Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black
+                            ),
+                            startY = boxSize.height * 0.5f,
+                            endY = boxSize.height * 0.6f
+                        )
+                    )
+            )
+
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom
+            ) {
                 Text(
                     text = video?.title ?: "",
                     color = Color.White,
@@ -91,11 +124,62 @@ fun MovieDetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    NetflixActionButton("Play", Icons.Default.PlayArrow, focusRequester = playButtonFocusRequester)
-                    NetflixActionButton("Add to Watchlist", Icons.Default.Add)
+                    Button(
+                        onClick = {
+                            // Handle button click
+                            navController.navigate("video_player")
+                        },
+                        modifier = Modifier
+                            .onFocusChanged { focusState ->
+                                isPlayBtnFocused = focusState.isFocused
+                            },// Attach the FocusRequester here
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isPlayBtnFocused) Color.White else Color.White.copy(alpha = 0.1f),
+                            contentColor = if (isPlayBtnFocused) Color.Black else Color.White
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = if (isPlayBtnFocused) Color.Black else Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            androidx.tv.material3.Text(
+                                text = "Play",
+                                color = if (isPlayBtnFocused) Color.Black else Color.White
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            // Handle button click
+                            Timber.tag("MovieDetailScreen").d("Play button clicked")
+                        },
+                        modifier = Modifier // Attach the FocusRequester here
+                            .onFocusChanged { focusState ->
+                                isAddToWatchListFocused = focusState.isFocused
+                            },// Attach the FocusRequester here
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isAddToWatchListFocused) Color.White else Color.White.copy(alpha = 0.1f),
+                            contentColor = if (isAddToWatchListFocused) Color.Black else Color.White
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = if (isAddToWatchListFocused) Color.Black else Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            androidx.tv.material3.Text(
+                                text = "Add to Watchlist",
+                                color = if (isAddToWatchListFocused) Color.Black else Color.White
+                            )
+                        }
+                    }
                 }
+
             }
-        }
 
 //            item {
 //                // "More Like This" Row
@@ -122,6 +206,7 @@ fun MovieDetailScreen(
 //                    }
 //                }
 //            }
+        }
     }
 
 }
