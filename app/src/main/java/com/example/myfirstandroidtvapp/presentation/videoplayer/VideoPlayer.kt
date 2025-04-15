@@ -2,6 +2,11 @@ package com.example.myfirstandroidtvapp.presentation.videoplayer
 
 import android.view.KeyEvent
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,10 +35,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
@@ -133,20 +142,32 @@ fun VideoPlayer(viewModel: VodViewModel) {
         if (controlsVisible) {
             VideoControllerOverlay(
                 isPlaying = exoPlayer.isPlaying,
-                onPlayPauseToggle = { exoPlayer.playWhenReady = !exoPlayer.isPlaying },
-                onSeekForward = { exoPlayer.seekTo(exoPlayer.currentPosition + 10_000) },
-                onSeekBack = { exoPlayer.seekTo((exoPlayer.currentPosition - 10_000).coerceAtLeast(0)) },
+                onTogglePlay = {
+                    exoPlayer.playWhenReady = !exoPlayer.isPlaying
+                },
+                onSeekForward = {
+                    exoPlayer.seekTo(exoPlayer.currentPosition + 10_000)
+                },
+                onSeekBackward = {
+                    exoPlayer.seekTo((exoPlayer.currentPosition - 10_000).coerceAtLeast(0))
+                },
                 currentPosition = currentPosition,
                 totalDuration = totalDuration,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(1f)
-                    .background(Color(0x66000000))
+                showControls = controlsVisible,
+                onHideControls = { controlsVisible = false },
+                onShowControls = { controlsVisible = true }
             )
         }
 
         if (isBuffering) {
-            CircularLogoWithLoadingRing()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black), // Keeps background consistent
+                contentAlignment = Alignment.Center // Centers the loader
+            ) {
+                CircularLogoWithLoadingRing()
+            }
         }
     }
 }
@@ -154,58 +175,125 @@ fun VideoPlayer(viewModel: VodViewModel) {
 @Composable
 fun VideoControllerOverlay(
     isPlaying: Boolean,
-    onPlayPauseToggle: () -> Unit,
-    onSeekForward: () -> Unit,
-    onSeekBack: () -> Unit,
     currentPosition: Long,
     totalDuration: Long,
-    modifier: Modifier = Modifier
+    onTogglePlay: () -> Unit,
+    onSeekForward: () -> Unit,
+    onSeekBackward: () -> Unit,
+    showControls: Boolean,
+    onHideControls: () -> Unit,
+    onShowControls: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .padding(32.dp)
-            .focusable(),
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.CenterHorizontally
+    var visible by remember { mutableStateOf(showControls) }
+    val fadeInOut by rememberUpdatedState(newValue = visible)
+
+    // Auto-hide after 3 seconds
+    LaunchedEffect(visible, isPlaying) {
+        if (visible && isPlaying) {
+            delay(3000)
+            visible = false
+            onHideControls()
+        }
+    }
+
+    AnimatedVisibility(
+        visible = fadeInOut,
+        enter = fadeIn(animationSpec = tween(300)),
+        exit = fadeOut(animationSpec = tween(300))
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(32.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            IconButton(onClick = onSeekBack) {
-                Icon(Icons.Default.FastRewind, contentDescription = "Rewind", tint = Color.White)
-            }
-            Spacer(modifier = Modifier.width(48.dp))
-            IconButton(onClick = onPlayPauseToggle) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Play/Pause",
-                    tint = Color.White
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IconButton(onClick = {
+                        onSeekBackward()
+                        visible = true
+                        onShowControls()
+                    }) {
+                        Icon(Icons.Default.FastRewind, contentDescription = "Rewind", tint = Color.White)
+                    }
+                    IconButton(onClick = {
+                        onTogglePlay()
+                        visible = true
+                        onShowControls()
+                    }) {
+                        Icon(
+                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = Color.White
+                        )
+                    }
+                    IconButton(onClick = {
+                        onSeekForward()
+                        visible = true
+                        onShowControls()
+                    }) {
+                        Icon(Icons.Default.FastForward, contentDescription = "Forward", tint = Color.White)
+                    }
+                }
+
+                // Your custom progress bar
+                VideoProgressBar(
+                    progress = if (totalDuration > 0) currentPosition / totalDuration.toFloat() else 0f,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(top = 12.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(48.dp))
-            IconButton(onClick = onSeekForward) {
-                Icon(Icons.Default.FastForward, contentDescription = "Forward", tint = Color.White)
-            }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun VideoProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    val clampedProgress = progress.coerceIn(0f, 1f)
 
-        LinearProgressIndicator(
-            progress = { if (totalDuration > 0) currentPosition / totalDuration.toFloat() else 0f },
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .height(6.dp)
-                .clip(RoundedCornerShape(50)),
-        )
+    Box(
+        modifier = modifier
+            .height(12.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50))
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val barHeight = size.height
+            val barWidth = size.width
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // Background (gray track)
+            drawRoundRect(
+                color = Color.DarkGray,
+                size = Size(barWidth, barHeight),
+                cornerRadius = CornerRadius(barHeight / 2, barHeight / 2)
+            )
 
-        Text(
-            text = "${formatTime(currentPosition)} / ${formatTime(totalDuration)}",
-            color = Color.White,
-            fontSize = 14.sp
-        )
+            // Progress (red)
+            drawRoundRect(
+                color = Color.Red,
+                size = Size(barWidth * clampedProgress, barHeight),
+                cornerRadius = CornerRadius(barHeight / 2, barHeight / 2)
+            )
+
+            // Scrubber circle
+            val knobRadius = barHeight * 1.2f
+            val knobX = barWidth * clampedProgress
+
+            drawCircle(
+                color = Color.White,
+                radius = knobRadius / 2f,
+                center = Offset(knobX, barHeight / 2)
+            )
+        }
     }
 }
 
