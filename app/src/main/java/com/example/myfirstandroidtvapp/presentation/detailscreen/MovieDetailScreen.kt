@@ -1,5 +1,6 @@
 package com.example.myfirstandroidtvapp.presentation.detailscreen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,7 +38,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.tv.material3.Icon
 import coil.compose.AsyncImage
+import com.example.myfirstandroidtvapp.data.remote.util.FormatterUtil
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
+import okhttp3.internal.concurrent.formatDuration
 import timber.log.Timber
 
 @Composable
@@ -52,7 +55,7 @@ fun MovieDetailScreen(
     var isAddToWatchListFocused by remember { mutableStateOf(false) }
 
 
-    Column (
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .onGloballyPositioned { coordinates ->
@@ -92,7 +95,7 @@ fun MovieDetailScreen(
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp)
+                    .padding(start = 20.dp, bottom = 20.dp)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.Bottom
             ) {
@@ -106,8 +109,13 @@ fun MovieDetailScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "${video?.yearRelease} • ${video?.duration} • must watch!",
-                    color = Color.Gray,
+                    text = "${if (video?.yearRelease == "0") "New!" else video?.yearRelease} • ${
+                        FormatterUtil.formatDuration(
+                            video?.duration.toString()
+                        )
+                    } • must watch!",
+                    color = Color(0xFF00C853),
+                    fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
 
@@ -134,7 +142,9 @@ fun MovieDetailScreen(
                                 isPlayBtnFocused = focusState.isFocused
                             },// Attach the FocusRequester here
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isPlayBtnFocused) Color.White else Color.White.copy(alpha = 0.1f),
+                            containerColor = if (isPlayBtnFocused) Color.White else Color.White.copy(
+                                alpha = 0.1f
+                            ),
                             contentColor = if (isPlayBtnFocused) Color.Black else Color.White
                         )
                     ) {
@@ -142,7 +152,11 @@ fun MovieDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = if (isPlayBtnFocused) Color.Black else Color.White)
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = if (isPlayBtnFocused) Color.Black else Color.White
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             androidx.tv.material3.Text(
                                 text = "Play",
@@ -161,7 +175,9 @@ fun MovieDetailScreen(
                                 isAddToWatchListFocused = focusState.isFocused
                             },// Attach the FocusRequester here
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isAddToWatchListFocused) Color.White else Color.White.copy(alpha = 0.1f),
+                            containerColor = if (isAddToWatchListFocused) Color.White else Color.White.copy(
+                                alpha = 0.1f
+                            ),
                             contentColor = if (isAddToWatchListFocused) Color.Black else Color.White
                         )
                     ) {
@@ -169,7 +185,11 @@ fun MovieDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = if (isAddToWatchListFocused) Color.Black else Color.White)
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = if (isAddToWatchListFocused) Color.Black else Color.White
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             androidx.tv.material3.Text(
                                 text = "Add to Watchlist",
@@ -210,4 +230,5 @@ fun MovieDetailScreen(
     }
 
 }
+
 

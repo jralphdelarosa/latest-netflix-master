@@ -54,8 +54,6 @@ dependencies {
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.foundation.layout.android)
@@ -103,8 +101,8 @@ dependencies {
 
     // ExoPlayer for video playback
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.ui)
-    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.exoplayer.hls)
 
     //noinspection GradleDependency
     implementation(libs.androidx.webkit)
