@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MyFirstAndroidTVApp</string>
+    <string name="app_name">NetflixTVApp</string>
 
     <!-- Sections -->
     <string name="search">Search</string>

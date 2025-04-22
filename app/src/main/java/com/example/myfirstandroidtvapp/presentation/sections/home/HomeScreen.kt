@@ -64,6 +64,7 @@ import com.example.myfirstandroidtvapp.presentation.sections.movies.MovieScreen
 import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
 import com.example.myfirstandroidtvapp.presentation.sections.series.SeriesScreen
 import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsScreen
+import com.example.myfirstandroidtvapp.presentation.sections.tv_guide.TvGuideScreen
 
 
 @Composable
@@ -123,7 +124,6 @@ fun HomeScreen(
 
         Box(
             modifier = Modifier
-                .background(Color.Black.copy(alpha = 0.8f))
                 .zIndex(1f)
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.key == Key.DirectionRight && keyEvent.type == KeyEventType.KeyDown) {
@@ -149,7 +149,7 @@ fun HomeScreen(
                 .zIndex(0f)
                 .focusable()
                 .focusRequester(focusRequester)
-                .padding(start = 25.dp)
+                .padding(start = 30.dp)
         ) {
             when (lastSelectedItem) {
                 NavItem.Search -> SearchScreen()
@@ -160,6 +160,7 @@ fun HomeScreen(
 
                 NavItem.Movies -> MovieScreen()
                 NavItem.Series -> SeriesScreen()
+                NavItem.TvGuide -> TvGuideScreen()
                 NavItem.Settings -> SettingsScreen()
             }
         }

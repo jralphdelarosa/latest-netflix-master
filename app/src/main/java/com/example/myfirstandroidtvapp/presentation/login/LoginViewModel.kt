@@ -64,7 +64,7 @@ class LoginViewModel @Inject constructor(
 
             when (val result = userRepository.login(email, password)) {
                 is ApiResponse.Success -> {
-                    Timber.tag("LoginViewModel").d("Login success: ${result.data}")
+                    Timber.tag("LoginViewModel").d("Login success: ${result.data} ${result.data.token?.access}")
                     _loginState.value = LoginState.Success(result.data)
                     TvCoreApplication.isUserLoggedIn.value = true
                 }

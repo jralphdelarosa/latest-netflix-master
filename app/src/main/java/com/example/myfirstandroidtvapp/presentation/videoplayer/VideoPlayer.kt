@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,13 +19,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Forward10
+import androidx.compose.material.icons.outlined.Replay10
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -40,11 +45,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,22 +132,31 @@ fun VideoPlayer(viewModel: VodViewModel) {
         }
     }
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .focusable()
-        .onKeyEvent {
-            if (it.nativeKeyEvent.action == KeyEvent.ACTION_DOWN &&
-                it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-            ) {
-                controlsVisible = !controlsVisible
-                true
-            } else false
-        }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusable()
+            .onKeyEvent {
+                if (it.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
+                    when (it.nativeKeyEvent.keyCode) {
+                        KeyEvent.KEYCODE_DPAD_CENTER,
+                        KeyEvent.KEYCODE_DPAD_UP,
+                        KeyEvent.KEYCODE_DPAD_DOWN,
+                        KeyEvent.KEYCODE_DPAD_LEFT,
+                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                            controlsVisible = true
+                            true
+                        }
+
+                        else -> false
+                    }
+                } else false
+            }
     ) {
         AndroidView(
             factory = {
                 PlayerView(context).apply {
-                    useController = false // turn off default controller
+                    useController = false
                     player = exoPlayer
                 }
             },
@@ -153,9 +177,7 @@ fun VideoPlayer(viewModel: VodViewModel) {
                 },
                 currentPosition = currentPosition,
                 totalDuration = totalDuration,
-                showControls = controlsVisible,
-                onHideControls = { controlsVisible = false },
-                onShowControls = { controlsVisible = true }
+                onHideControls = { controlsVisible = false }
             )
         }
 
@@ -163,8 +185,8 @@ fun VideoPlayer(viewModel: VodViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black), // Keeps background consistent
-                contentAlignment = Alignment.Center // Centers the loader
+                    .background(Color.Transparent),
+                contentAlignment = Alignment.Center
             ) {
                 CircularLogoWithLoadingRing()
             }
@@ -180,14 +202,18 @@ fun VideoControllerOverlay(
     onTogglePlay: () -> Unit,
     onSeekForward: () -> Unit,
     onSeekBackward: () -> Unit,
-    showControls: Boolean,
     onHideControls: () -> Unit,
-    onShowControls: () -> Unit,
 ) {
-    var visible by remember { mutableStateOf(showControls) }
-    val fadeInOut by rememberUpdatedState(newValue = visible)
+    var visible by remember { mutableStateOf(true) }
 
-    // Auto-hide after 3 seconds
+    val focusRequesterRewind = remember { FocusRequester() }
+    val focusRequesterPlay = remember { FocusRequester() }
+    val focusRequesterForward = remember { FocusRequester() }
+
+    var isFocusedRewind by remember { mutableStateOf(false) }
+    var isFocusedPlay by remember { mutableStateOf(false) }
+    var isFocusedForward by remember { mutableStateOf(false) }
+
     LaunchedEffect(visible, isPlaying) {
         if (visible && isPlaying) {
             delay(3000)
@@ -197,61 +223,154 @@ fun VideoControllerOverlay(
     }
 
     AnimatedVisibility(
-        visible = fadeInOut,
+        visible = visible,
         enter = fadeIn(animationSpec = tween(300)),
         exit = fadeOut(animationSpec = tween(300))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .padding(32.dp),
-            contentAlignment = Alignment.BottomCenter
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+            // Central Playback Controls
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(40.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                IconButton(
+                    onClick = onSeekBackward,
+                    modifier = Modifier
+                        .focusable()
+                        .focusRequester(focusRequesterRewind)
+                        .onFocusChanged { isFocusedRewind = it.isFocused }
+                        .netflixFocus(isFocusedRewind)
+                        .onKeyEvent {
+                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
+                                focusRequesterPlay.requestFocus()
+                                true
+                            } else false
+                        }
                 ) {
-                    IconButton(onClick = {
-                        onSeekBackward()
-                        visible = true
-                        onShowControls()
-                    }) {
-                        Icon(Icons.Default.FastRewind, contentDescription = "Rewind", tint = Color.White)
-                    }
-                    IconButton(onClick = {
-                        onTogglePlay()
-                        visible = true
-                        onShowControls()
-                    }) {
-                        Icon(
-                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = {
-                        onSeekForward()
-                        visible = true
-                        onShowControls()
-                    }) {
-                        Icon(Icons.Default.FastForward, contentDescription = "Forward", tint = Color.White)
-                    }
+                    Icon(
+                        imageVector = Icons.Outlined.Replay10,
+                        contentDescription = "Rewind 10s",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
 
-                // Your custom progress bar
+                IconButton(
+                    onClick = onTogglePlay,
+                    modifier = Modifier
+                        .focusRequester(focusRequesterPlay)
+                        .onFocusChanged { isFocusedPlay = it.isFocused }
+                        .netflixFocus(isFocusedPlay)
+                        .onKeyEvent {
+                            if (it.type == KeyEventType.KeyDown) {
+                                when (it.key) {
+                                    Key.DirectionLeft -> {
+                                        focusRequesterRewind.requestFocus()
+                                        true
+                                    }
+
+                                    Key.DirectionRight -> {
+                                        focusRequesterForward.requestFocus()
+                                        true
+                                    }
+
+                                    else -> false
+                                }
+                            } else false
+                        }
+                        .focusable()
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = onSeekForward,
+                    modifier = Modifier
+                        .focusable()
+                        .focusRequester(focusRequesterForward)
+                        .onFocusChanged { isFocusedForward = it.isFocused }
+                        .netflixFocus(isFocusedForward)
+                        .onKeyEvent {
+                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionLeft) {
+                                focusRequesterPlay.requestFocus()
+                                true
+                            } else false
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Forward10,
+                        contentDescription = "Forward 10s",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+
+            // Progress bar and time indicators at bottom
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+            ) {
                 VideoProgressBar(
                     progress = if (totalDuration > 0) currentPosition / totalDuration.toFloat() else 0f,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(top = 12.dp)
+                    modifier = Modifier.fillMaxWidth(0.9f)
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = formatTime(currentPosition),
+                        color = Color.White,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = formatTime(totalDuration),
+                        color = Color.White,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // Focus play button after visibility
+            LaunchedEffect(Unit) {
+                delay(100)
+                focusRequesterPlay.requestFocus()
             }
         }
     }
 }
+
+fun Modifier.netflixFocus(isFocused: Boolean): Modifier = this
+    .graphicsLayer {
+        scaleX = if (isFocused) 1.05f else 1f
+        scaleY = if (isFocused) 1.05f else 1f
+    }
+    .drawBehind {
+        if (isFocused) {
+            val radius = size.minDimension / 1.8f
+            drawCircle(
+                color = Color.White.copy(alpha = 0.10f),
+                radius = radius,
+                center = center
+            )
+        }
+    }
 
 @Composable
 fun VideoProgressBar(

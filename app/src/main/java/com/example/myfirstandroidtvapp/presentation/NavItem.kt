@@ -5,5 +5,6 @@ enum class NavItem(val title: String, val route: String) {
     Dashboard("Dashboard", "dashboard"),
     Movies("Movies", "movies"),
     Series("Series", "series"),
+    TvGuide("TvGuide", "tvguide"),
     Settings("Settings", "settings")
 }
