@@ -1,5 +1,6 @@
 package com.example.myfirstandroidtvapp.data.remote.api
 
+import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.VodCategoryResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -12,4 +13,9 @@ interface VodApi {
         @Query("has_video") hasVideo: Boolean = true,
         @Header("Authorization") authHeader: String
     ): Response<VodCategoryResponse>
+
+    @GET("app/configs")
+    suspend fun getServerConfig(
+        @Query("tenant_id") tenantId: String
+    ): ConfigResponse
 }

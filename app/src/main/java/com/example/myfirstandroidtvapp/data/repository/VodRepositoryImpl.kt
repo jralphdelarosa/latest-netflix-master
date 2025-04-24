@@ -1,5 +1,6 @@
 package com.example.myfirstandroidtvapp.data.repository
 
+import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
 import com.example.myfirstandroidtvapp.data.remote.api.VodApi
@@ -19,20 +20,21 @@ class VodRepositoryImpl @Inject constructor(
 
         return try {
 
-            var token = userPref.getAccessToken() // Get current token
+            var accessKey = userPref.getAccessToken() // Get current token
 
             // If token is missing, try refreshing it
-            if (token.isNullOrBlank()) {
+            if (accessKey.isNullOrBlank()) {
                 val refreshResponse = userRepository.refreshToken()
                 if (refreshResponse is ApiResponse.Success) {
-                    token = refreshResponse.data.token?.access // Get new token
+                    accessKey = refreshResponse.data.token?.access // Get new token
                 } else {
                     return Result.failure(Exception("Failed to refresh token"))
                 }
             }
 
+            Timber.tag("vod response").d("Access token: $accessKey")
 
-            val response = apiService.getVodCategories(authHeader = "Bearer $token")
+            val response = apiService.getVodCategories(authHeader = buildAuthHeader(accessKey.toString()))
 
             Timber.tag("vod response").d("Response body: ${response.body()?.toString()}")
 
@@ -47,5 +49,9 @@ class VodRepositoryImpl @Inject constructor(
             Timber.tag("vod response").d("${e.message}")
             Result.failure(e)
         }
+    }
+
+    fun buildAuthHeader(accessKey:String): String {
+        return if (TvCoreApplication.isUserLoggedIn.value == true) "Bearer $accessKey" else "Tenant-Key $accessKey"
     }
 }

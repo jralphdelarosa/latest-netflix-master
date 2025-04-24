@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
+import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.RegisterResponse
 import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
@@ -38,6 +39,13 @@ sealed class RegisterState {
     data class Error(val errorType: ErrorType, val message: String) : RegisterState()
 }
 
+sealed class ConfigState{
+    object Idle : ConfigState()
+    object Loading : ConfigState()
+    data class Success(val configResponse: ConfigResponse) : ConfigState()
+    data class Error(val errorType: ErrorType, val message: String) : ConfigState()
+}
+
 enum class ErrorType {
     EMPTY_FIELDS,
     INVALID_CREDENTIALS,
@@ -56,6 +64,39 @@ class LoginViewModel @Inject constructor(
 
     private val _registerState = MutableStateFlow<ApiResult<RegisterResponse>>(ApiResult.Idle)
     val registerState: StateFlow<ApiResult<RegisterResponse>> = _registerState.asStateFlow()
+
+    private val _configState = MutableStateFlow<ConfigState>(ConfigState.Idle)
+    val configState: StateFlow<ConfigState> = _configState
+
+    fun getConfig(){
+        viewModelScope.launch {
+            Timber.tag("LoginViewModel").d("getConfig()")
+            _configState.value = ConfigState.Loading
+
+            when (val result = userRepository.getConfig()){
+                is ApiResponse.Success ->{
+                    Timber.tag("LoginViewModel").d("Login success: ${result.data} ${result.data.packageInfo.accessKey}")
+                    _configState.value = ConfigState.Success(result.data)
+                }
+                is ApiResponse.Error ->{
+                    Timber.tag("LoginViewModel").e("Getting the config failed: ${result.message}")
+
+                    val errorType = when {
+                        result.message.contains("empty", ignoreCase = true) -> ErrorType.EMPTY_FIELDS
+                        result.message.contains("network", ignoreCase = true) -> ErrorType.NETWORK_ERROR
+                        else -> ErrorType.UNKNOWN_ERROR
+                    }
+
+                    _configState.value = ConfigState.Error(errorType, result.message)
+                }
+
+                ApiResponse.NetworkError -> {
+                    Timber.tag("LoginViewModel").e("No internet connection")
+                    _configState.value = ConfigState.Error( ErrorType.NETWORK_ERROR, "No internet connection. Please try again.")
+                }
+            }
+        }
+    }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {

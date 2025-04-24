@@ -30,7 +30,7 @@ fun AppNavigation() {
         composable("dashboard") { DashBoardScreen(vodViewModel,navController) }
         composable("search") { SearchScreen() }
         composable("series") { SeriesScreen() }
-        composable("settings") { SettingsScreen() }
+        composable("settings") { SettingsScreen(navController) }
         composable("video_details") { MovieDetailScreen(vodViewModel,navController) }
         composable("video_player") { VideoPlayer(vodViewModel) }
     }

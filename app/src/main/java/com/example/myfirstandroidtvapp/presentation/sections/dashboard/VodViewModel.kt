@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPrefImpl
 import com.example.myfirstandroidtvapp.data.remote.dto.VodCategoryResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.VodVideo
 import com.example.myfirstandroidtvapp.domain.repository.VodRepository
@@ -28,7 +29,6 @@ class VodViewModel @Inject constructor(
     fun fetchVodCategories() {
         viewModelScope.launch {
             _vodCategories.value = vodRepository.fetchVodCategories()
-            Timber.tag("vod response").d("VodViewModel")
         }
     }
 }

@@ -10,6 +10,7 @@ import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.remote.ApiConstants
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
 import com.example.myfirstandroidtvapp.data.remote.api.AuthApi
+import com.example.myfirstandroidtvapp.data.remote.api.VodApi
 import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
@@ -35,6 +36,7 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
+    private val vodApi: VodApi,
     private val userPref: UserSharedPref,
     val context: Context
 ) : UserRepository {
@@ -138,20 +140,22 @@ class UserRepositoryImpl @Inject constructor(
             ApiResponse.Error(e.localizedMessage ?: "Network error")
         }
     }
+
     override suspend fun getConfig(): ApiResponse<ConfigResponse> {
         return try {
             Timber.d("getConfig()")
             if (_currentConfig != null) {
-                TvCoreApplication.isLoginRequired = _currentConfig!!.packageInfo?.general?.loginRequired!!
+                TvCoreApplication.isLoginRequired = _currentConfig!!.packageInfo.general.loginRequired
                 return ApiResponse.Success(_currentConfig!!)
             }
-            authApi.getServerConfig().also { response ->
-                if (response is ApiResponse.Success) {
-                    _currentConfig = response.data
-                    TvCoreApplication.isLoginRequired = response.data.packageInfo?.general?.loginRequired!!
-                    updateConfigValues(response.data)
-                }
-            }
+
+            val config = vodApi.getServerConfig(ApiConstants.TENANT_ID)
+            _currentConfig = config
+            TvCoreApplication.isLoginRequired = config.packageInfo.general.loginRequired
+            updateConfigValues(config)
+
+            ApiResponse.Success(config)
+
         } catch (e: Exception) {
             Timber.e("failed to load config: ${e.localizedMessage}")
             ApiResponse.Error(e.localizedMessage ?: "Network error")
@@ -179,7 +183,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override fun updateToken(accessToken: String?, refreshToken: String?) {
         accessToken?.let {
-            userPref.setAccessToken("Tenant-Key $it")  // Store in SharedPreferences
+            userPref.setAccessToken(it)  // Store in SharedPreferences
         }
         refreshToken?.let {
             userPref.setRefreshToken(it)
@@ -239,12 +243,12 @@ class UserRepositoryImpl @Inject constructor(
             }
         }
         updateToken(config.packageInfo.accessKey, null)
-        if (userPref.getAutoPlayConfig() == null) {
-            userPref.setAutoPlay(config.packageInfo.general.autoPlay)
-        }
+//        if (userPref.getAutoPlayConfig() == null) {
+//            userPref.setAutoPlay(config.packageInfo.general.autoPlay)
+//        }
         editor.putBoolean("autoplay", sharedPreferences.getBoolean("autoplay", true)).apply()
         Timber.d(config.toString())
-        userPref.setTemplateId(config.packageInfo.templateId)
+//        userPref.setTemplateId(config.packageInfo.templateId)
     }
 
     private fun generateQrCodePath(

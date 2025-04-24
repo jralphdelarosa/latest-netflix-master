@@ -110,7 +110,7 @@ fun Sidebar(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.8f),
+                                Color.Black.copy(alpha = 0.9f),
                                 Color.Transparent
                             ),
                             startX = boxSize.width * 0.3f,
@@ -133,7 +133,7 @@ fun Sidebar(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "App Logo",
                 modifier = Modifier
-                    .padding(top = 40.dp, start = 16.dp)
+                    .padding(top = 40.dp, start = 5.dp)
                     .align(Alignment.Start) // Aligns the logo to the start (left) of the column
             )
 

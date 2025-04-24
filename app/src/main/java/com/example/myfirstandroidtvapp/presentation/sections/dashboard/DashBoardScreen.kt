@@ -3,6 +3,7 @@ package com.example.myfirstandroidtvapp.presentation.sections.dashboard
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -263,6 +264,11 @@ fun VideoThumbnail(
     Card(
         modifier = Modifier
             .size(if (isFocused) 140.dp else 130.dp, if (isFocused) 210.dp else 200.dp)
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) Color.Red.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.4f), // glow-like white border
+                shape = RoundedCornerShape(6.dp)
+            )
             .onFocusChanged { focusState ->
                 if (focusState.hasFocus) {
                     onFocusChanged(video, vodCategory)
@@ -270,7 +276,7 @@ fun VideoThumbnail(
                 isFocused = focusState.hasFocus
             }
             .clickable {
-                if(video!=null) {
+                if (video != null) {
                     viewModel.selectedMovie = video
                     navController.navigate("video_details")
                 }

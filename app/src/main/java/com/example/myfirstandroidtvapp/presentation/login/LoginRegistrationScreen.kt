@@ -76,6 +76,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -85,11 +86,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -98,113 +101,199 @@ import timber.log.Timber
  * Created by John Ralph Dela Rosa on 3/23/2025.
  */
 
-//sliding animation
+
 @Composable
-fun LoginRegistrationScreen(loginViewModel: LoginViewModel, vodViewModel: VodViewModel, navController: NavController) {
+fun LoginRegistrationScreen(
+    loginViewModel: LoginViewModel,
+    vodViewModel: VodViewModel,
+    navController: NavController
+) {
     var isSignup by remember { mutableStateOf(false) }
+
+    var isToggleFocus by remember { mutableStateOf(false) }
+    var toHighlightToggle by remember { mutableStateOf(false) }
+
+    var isLoading by remember { mutableStateOf(false) }
+
+    val vodCategories by vodViewModel.vodCategories.collectAsState() // for watch as a guess
+
+    val configState by loginViewModel.configState.collectAsState()
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
     val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .onKeyEvent {
-                if (it.type == KeyEventType.KeyDown) {
-                    when (it.key) {
-                        Key.DirectionLeft -> {
-                            isSignup = false
-                            true
-                        }
-
-                        Key.DirectionRight -> {
-                            isSignup = true
-                            true
-                        }
-
-                        else -> false
-                    }
-                } else false
-            }
-    ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .padding(end = 20.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(150.dp)
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                LoginToggleSwitch(selectedOption = isSignup, onOptionSelected = { isSignup = it })
-            }
+    LaunchedEffect(vodCategories) {
+        if (vodCategories?.isSuccess == true) {
+            isLoading = false
+            navController.navigate("home")
+        } else if (vodCategories?.isFailure == false) {
+            Toast.makeText(context, "Failed to fetch data!", Toast.LENGTH_LONG).show()
         }
+    }
+
+    LaunchedEffect(configState) {
+        when (configState) {
+            is ConfigState.Success -> {
+                vodViewModel.fetchVodCategories()
+            }
+
+            is ConfigState.Error -> {
+                isLoading = false
+                val error = configState as ConfigState.Error
+                errorMessage = when (error.errorType) {
+                    ErrorType.EMPTY_FIELDS -> "Please fill in all fields."
+                    ErrorType.INVALID_CREDENTIALS -> "Incorrect email or password. Try again."
+                    ErrorType.NETWORK_ERROR -> "Network error. Check your internet connection."
+                    ErrorType.UNKNOWN_ERROR -> "Something went wrong. Please try again."
+                }
+
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+            }
+
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(isToggleFocus) {
+        toHighlightToggle = isToggleFocus
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black), // Keeps background consistent
+            contentAlignment = Alignment.Center // Centers the loader
+        ) {
+            CircularLogoWithLoadingRing()
+        }
+    } else {
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+                .fillMaxSize()
         ) {
-            this@Column.AnimatedVisibility(
-                visible = !isSignup,
-                enter = slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(durationMillis = 500)),
-                exit = slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(durationMillis = 300))
-            ) {
-                LoginScreen(
-                    loginViewModel = loginViewModel,
-                    vodViewModel = vodViewModel,
-                    navController = navController
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.main_bg),
+                contentDescription = "Background",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
 
-            this@Column.AnimatedVisibility(
-                visible = isSignup,
-                enter = slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(durationMillis = 500)),
-                exit = slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(durationMillis = 300))
-            ) {
-                RegistrationScreen(loginViewModel, navController)
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(
-                onClick = { navController.navigate("home") },
+            Column(
                 modifier = Modifier
-                    .width(200.dp)
-                    .padding(bottom = 20.dp)
-                ,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f)) // optional dark overlay
+                    .onKeyEvent {
+                        if (it.type == KeyEventType.KeyDown) {
+                            when (it.key) {
+                                Key.DirectionLeft -> {
+                                    isSignup = false
+                                    true
+                                }
+
+                                Key.DirectionRight -> {
+                                    isSignup = true
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        } else false
+                    }
+                    .onFocusChanged { focusState ->
+                        isToggleFocus = focusState.isFocused
+                    }
             ) {
-                Text("Watch as Guest", color = Color.White)
+                // Top Logo + Toggle
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 20.dp)
+                            .align(Alignment.TopEnd)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(150.dp)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        LoginToggleSwitch(
+                            toHighlightToggle = toHighlightToggle,
+                            selectedOption = isSignup,
+                            onOptionSelected = { isSignup = it }
+                        )
+                    }
+                }
+
+                // Forms
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    this@Column.AnimatedVisibility(
+                        visible = !isSignup,
+                        enter = slideInHorizontally { it } + fadeIn(),
+                        exit = slideOutHorizontally { -it } + fadeOut()
+                    ) {
+                        LoginScreen(
+                            loginViewModel = loginViewModel,
+                            vodViewModel = vodViewModel,
+                            navController = navController
+                        )
+                    }
+
+                    this@Column.AnimatedVisibility(
+                        visible = isSignup,
+                        enter = slideInHorizontally { -it } + fadeIn(),
+                        exit = slideOutHorizontally { it } + fadeOut()
+                    ) {
+                        RegistrationScreen(loginViewModel, navController)
+                    }
+                }
+
+                // Guest Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    var isWatchAsGuestFocus by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = {
+                            isLoading = true
+                            loginViewModel.getConfig()
+                        },
+                        modifier = Modifier
+                            .width(200.dp)
+                            .padding(bottom = 20.dp)
+                            .onFocusChanged { focusState ->
+                                isWatchAsGuestFocus = focusState.hasFocus
+                            },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isWatchAsGuestFocus) Color.White else Color.DarkGray.copy(
+                                alpha = 0.4f
+                            )
+                        )
+                    ) {
+                        Text(
+                            "Watch as Guest",
+                            color = if (isWatchAsGuestFocus) Color.Black else Color.White
+                        )
+                    }
+                }
             }
         }
     }
 }
-
 
 @Composable
 fun LoginScreen(
@@ -227,10 +316,10 @@ fun LoginScreen(
     val vodCategories by vodViewModel.vodCategories.collectAsState()
 
     LaunchedEffect(vodCategories) {
-        if (vodCategories?.isSuccess == true){
+        if (vodCategories?.isSuccess == true) {
             isLoading = false
             navController.navigate("home")
-        } else if(vodCategories?.isFailure == false){
+        } else if (vodCategories?.isFailure == false) {
             Toast.makeText(context, "Failed to fetch data!", Toast.LENGTH_LONG).show()
         }
     }
@@ -260,7 +349,7 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black), // Keeps background consistent
+                .background(Color.Transparent), // Keeps background consistent
             contentAlignment = Alignment.Center // Centers the loader
         ) {
             CircularLogoWithLoadingRing()
@@ -269,7 +358,7 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(Color.Transparent)
         ) {
 
             Row(
@@ -282,7 +371,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .weight(1f)
                         .padding(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(
@@ -359,7 +448,7 @@ fun LoginScreen(
                         .weight(1f)
                         .padding(16.dp)
                         .height(220.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(
@@ -388,7 +477,7 @@ fun LoginScreen(
 }
 
 @Composable
-fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavController) {
+fun RegistrationScreen(loginViewModel: LoginViewModel, navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -397,7 +486,7 @@ fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavControll
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Transparent)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -409,7 +498,7 @@ fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavControll
                 modifier = Modifier
                     .weight(1f)
                     .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
@@ -429,7 +518,7 @@ fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavControll
                     )
                     Button(
                         onClick = {
-                            loginViewModel.register(email,password)
+                            loginViewModel.register(email, password)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                         modifier = Modifier.fillMaxWidth()
@@ -465,7 +554,7 @@ fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavControll
                     .weight(1f)
                     .padding(16.dp)
                     .height(220.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.2f)),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
@@ -500,14 +589,18 @@ fun RegistrationScreen(loginViewModel: LoginViewModel,navController: NavControll
                 CircularLogoWithLoadingRing()
             }
         }
+
         is ApiResult.Success -> {
-            Toast.makeText(LocalContext.current, "Registration successful!", Toast.LENGTH_LONG).show()
+            Toast.makeText(LocalContext.current, "Registration successful!", Toast.LENGTH_LONG)
+                .show()
             navController.navigate("home") // Navigate to home on success
         }
+
         is ApiResult.Error -> {
             val errorMessage = (registrationState as ApiResult.Error).message
             Text(errorMessage, color = Color.Red, fontSize = 14.sp)
         }
+
         else -> {}
     }
 }
@@ -534,10 +627,10 @@ fun NetflixTextField(
             )
         },
         colors = TextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedContainerColor = Color.Black,
-            unfocusedContainerColor = Color.Black,
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White.copy(alpha = 0.8f),
             focusedIndicatorColor = Color.Red,
             unfocusedIndicatorColor = Color.Gray,
             cursorColor = Color.Red
@@ -553,6 +646,7 @@ fun NetflixTextField(
 
 @Composable
 fun LoginToggleSwitch(
+    toHighlightToggle: Boolean = false,
     selectedOption: Boolean,
     onOptionSelected: (Boolean) -> Unit
 ) {
@@ -567,7 +661,7 @@ fun LoginToggleSwitch(
             .width(200.dp)
             .height(40.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color.DarkGray)
+            .background(Color.DarkGray.copy(alpha = 0.4f))
             .clickable { onOptionSelected(!selectedOption) }
     ) {
         Box(
@@ -576,7 +670,7 @@ fun LoginToggleSwitch(
                 .width(110.dp)
                 .height(40.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color.White),
+                .background(if (toHighlightToggle) Color.White else Color.White.copy(alpha = 0.4f)),
             contentAlignment = Alignment.Center
         ) {
             Row(

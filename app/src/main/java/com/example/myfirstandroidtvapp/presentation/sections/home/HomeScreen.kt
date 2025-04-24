@@ -11,17 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -118,8 +114,15 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
     ) {
+
+        Image(
+            painter = painterResource(id = R.drawable.main_bg),
+            contentDescription = "Background",
+            modifier = Modifier
+                .fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
 
         Box(
@@ -149,7 +152,7 @@ fun HomeScreen(
                 .zIndex(0f)
                 .focusable()
                 .focusRequester(focusRequester)
-                .padding(start = 30.dp)
+                .padding(start = 40.dp)
         ) {
             when (lastSelectedItem) {
                 NavItem.Search -> SearchScreen()
@@ -161,7 +164,7 @@ fun HomeScreen(
                 NavItem.Movies -> MovieScreen()
                 NavItem.Series -> SeriesScreen()
                 NavItem.TvGuide -> TvGuideScreen()
-                NavItem.Settings -> SettingsScreen()
+                NavItem.Settings -> SettingsScreen(navController)
             }
         }
 
@@ -200,7 +203,7 @@ fun LogoutDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .background(Color.Black, shape = RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(12.dp))
                 .padding(20.dp)
         ) {
             Column(
@@ -232,8 +235,8 @@ fun LogoutDialog(
                     Button(
                         onClick = onDismiss,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = Color.White
+                            containerColor = if (isCancelFocused) Color.White else Color.Black,
+                            contentColor = if (isCancelFocused) Color.Black else Color.White
                         ),
                         modifier = Modifier
                             .weight(1f)
@@ -246,7 +249,7 @@ fun LogoutDialog(
                                 isCancelFocused = focusState.hasFocus
                             }
                     ) {
-                        Text("Cancel", fontSize = 16.sp)
+                        Text("Cancel", fontSize = 16.sp, color = if (isLogoutFocused) Color.Black else Color.White)
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -254,8 +257,8 @@ fun LogoutDialog(
                     Button(
                         onClick = onConfirm,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black,
-                            contentColor = Color.White
+                            containerColor = if (isLogoutFocused) Color.White else Color.Black,
+                            contentColor = if (isLogoutFocused) Color.Black else Color.White
                         ),
                         modifier = Modifier
                             .weight(1f)
@@ -288,7 +291,7 @@ fun GoToLoginDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .background(Color.Black, shape = RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(12.dp))
                 .padding(20.dp)
         ) {
             Column(
@@ -320,15 +323,15 @@ fun GoToLoginDialog(
                     Button(
                         onClick = onDismiss,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = Color.White
+                            containerColor = if (isCancelFocused) Color.White else Color.Black,
+                            contentColor = if (isCancelFocused) Color.Black else Color.White
                         ),
                         modifier = Modifier
                             .weight(1f)
                             .border(
                                 width = 1.dp,
                                 color = if (isCancelFocused) Color.Red else Color.White,
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(16.dp)
                             )
                             .onFocusChanged { focusState ->
                                 isCancelFocused = focusState.hasFocus
@@ -342,8 +345,8 @@ fun GoToLoginDialog(
                     Button(
                         onClick = onConfirm,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black,
-                            contentColor = Color.White
+                            containerColor = if (isLoginNowFocused) Color.White else Color.Black,
+                            contentColor = if (isLoginNowFocused) Color.Black else Color.White
                         ),
                         modifier = Modifier
                             .weight(1f)
@@ -354,7 +357,8 @@ fun GoToLoginDialog(
                             )
                             .onFocusChanged { focusState ->
                                 isLoginNowFocused = focusState.hasFocus
-                            }
+                            },
+                        shape = ButtonDefaults.shape
                     ) {
                         Text("Login Now", fontSize = 16.sp)
                     }

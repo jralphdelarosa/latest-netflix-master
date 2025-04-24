@@ -47,9 +47,6 @@ interface AuthApi {
         @Body request: RefreshTokenRequest
     ): ApiResponse<LoginResponse>
 
-    @GET("app/configs")
-    suspend fun getServerConfig(): ApiResponse<ConfigResponse>
-
     @GET
     suspend fun loadCustomDomainConfig(@Url url: String): ApiResponse<CustomDomainConfigResponse>
 
