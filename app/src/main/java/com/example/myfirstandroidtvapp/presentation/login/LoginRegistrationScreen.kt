@@ -617,11 +617,10 @@ fun NetflixTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        textStyle = TextStyle(color = Color.White, fontSize = 18.sp),
+        textStyle = TextStyle(color = Color.Black, fontSize = 18.sp),
         placeholder = {
             Text(
                 text = placeholder,
-                color = Color.Gray,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Light
             )
