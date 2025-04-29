@@ -5,20 +5,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPrefImpl
 import com.example.myfirstandroidtvapp.data.remote.dto.VodCategoryResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.VodVideo
-import com.example.myfirstandroidtvapp.domain.repository.VodRepository
+import com.example.myfirstandroidtvapp.domain.repository.ContentsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class VodViewModel @Inject constructor(
-    private val vodRepository: VodRepository
+    private val contentsRepository: ContentsRepository
 ) : ViewModel() {
 
     private val _vodCategories = MutableStateFlow<Result<VodCategoryResponse>?>(null)
@@ -28,7 +26,7 @@ class VodViewModel @Inject constructor(
 
     fun fetchVodCategories() {
         viewModelScope.launch {
-            _vodCategories.value = vodRepository.fetchVodCategories()
+            _vodCategories.value = contentsRepository.fetchVodCategories()
         }
     }
 }

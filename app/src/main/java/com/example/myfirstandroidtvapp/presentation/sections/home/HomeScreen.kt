@@ -61,12 +61,14 @@ import com.example.myfirstandroidtvapp.presentation.sections.search.SearchScreen
 import com.example.myfirstandroidtvapp.presentation.sections.series.SeriesScreen
 import com.example.myfirstandroidtvapp.presentation.sections.settings.SettingsScreen
 import com.example.myfirstandroidtvapp.presentation.sections.tv_guide.TvGuideScreen
+import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ChannelViewModel
 
 
 @Composable
 fun HomeScreen(
     vodViewModel: VodViewModel,
     loginViewModel: LoginViewModel,
+    channelViewModel: ChannelViewModel,
     navController: NavController
 ) {
     val context = LocalContext.current
@@ -163,7 +165,11 @@ fun HomeScreen(
 
                 NavItem.Movies -> MovieScreen()
                 NavItem.Series -> SeriesScreen()
-                NavItem.TvGuide -> TvGuideScreen()
+                NavItem.TvGuide -> TvGuideScreen(
+                    navController = navController,
+                    channelViewModel = channelViewModel
+                )
+
                 NavItem.Settings -> SettingsScreen(navController)
             }
         }
@@ -249,7 +255,11 @@ fun LogoutDialog(
                                 isCancelFocused = focusState.hasFocus
                             }
                     ) {
-                        Text("Cancel", fontSize = 16.sp, color = if (isLogoutFocused) Color.Black else Color.White)
+                        Text(
+                            "Cancel",
+                            fontSize = 16.sp,
+                            color = if (isLogoutFocused) Color.Black else Color.White
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))

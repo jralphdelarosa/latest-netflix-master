@@ -9,8 +9,8 @@ import com.example.myfirstandroidtvapp.TvCoreApplication
 import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.remote.ApiConstants
 import com.example.myfirstandroidtvapp.data.remote.api.ApiResponse
-import com.example.myfirstandroidtvapp.data.remote.api.AuthApi
-import com.example.myfirstandroidtvapp.data.remote.api.VodApi
+import com.example.myfirstandroidtvapp.data.remote.api.V3Api
+import com.example.myfirstandroidtvapp.data.remote.api.V1Api
 import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
@@ -24,7 +24,6 @@ import com.example.myfirstandroidtvapp.data.remote.request.RegisterRequest
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
 import com.google.gson.Gson
-import okhttp3.Response
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
@@ -35,8 +34,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class UserRepositoryImpl @Inject constructor(
-    private val authApi: AuthApi,
-    private val vodApi: VodApi,
+    private val authApi: V3Api,
+    private val v1Api: V1Api,
     private val userPref: UserSharedPref,
     val context: Context
 ) : UserRepository {
@@ -149,7 +148,7 @@ class UserRepositoryImpl @Inject constructor(
                 return ApiResponse.Success(_currentConfig!!)
             }
 
-            val config = vodApi.getServerConfig(ApiConstants.TENANT_ID)
+            val config = v1Api.getServerConfig(ApiConstants.TENANT_ID)
             _currentConfig = config
             TvCoreApplication.isLoginRequired = config.packageInfo.general.loginRequired
             updateConfigValues(config)

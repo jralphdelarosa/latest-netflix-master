@@ -1,9 +1,9 @@
 package com.example.myfirstandroidtvapp.di
 
 import com.example.myfirstandroidtvapp.data.repository.UserRepositoryImpl
-import com.example.myfirstandroidtvapp.data.repository.VodRepositoryImpl
+import com.example.myfirstandroidtvapp.data.repository.ContentsRepositoryImpl
 import com.example.myfirstandroidtvapp.domain.repository.UserRepository
-import com.example.myfirstandroidtvapp.domain.repository.VodRepository
+import com.example.myfirstandroidtvapp.domain.repository.ContentsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -20,5 +20,5 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindVodRepository(vodRepositoryImpl: VodRepositoryImpl): VodRepository
+    abstract fun bindVodRepository(contentsRepositoryImpl: ContentsRepositoryImpl): ContentsRepository
 }

@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
+import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ChannelViewModel
 import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -68,7 +70,10 @@ val timeSlots = listOf("17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20
 val thirtyMinuteWidth = 120.dp
 
 @Composable
-fun TvGuideScreen() {
+fun TvGuideScreen(
+    channelViewModel: ChannelViewModel,
+    navController: NavController
+) {
     val background = painterResource(id = R.drawable.main_bg)
 
     Box(modifier = Modifier.fillMaxSize()) {

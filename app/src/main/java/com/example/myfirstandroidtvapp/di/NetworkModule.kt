@@ -6,12 +6,8 @@ import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPref
 import com.example.myfirstandroidtvapp.data.local.usersharedpref.UserSharedPrefImpl
 import com.example.myfirstandroidtvapp.data.remote.ApiConstants
 import com.example.myfirstandroidtvapp.data.remote.ApiConstants.API_BASE
-import com.example.myfirstandroidtvapp.data.remote.api.AuthApi
-import com.example.myfirstandroidtvapp.data.remote.api.VodApi
-import com.example.myfirstandroidtvapp.data.repository.UserRepositoryImpl
-import com.example.myfirstandroidtvapp.data.repository.VodRepositoryImpl
-import com.example.myfirstandroidtvapp.domain.repository.UserRepository
-import com.example.myfirstandroidtvapp.domain.repository.VodRepository
+import com.example.myfirstandroidtvapp.data.remote.api.V3Api
+import com.example.myfirstandroidtvapp.data.remote.api.V1Api
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -120,13 +116,13 @@ object NetworkModule {
     // Provide AuthApi
     @Provides
     @Singleton
-    fun provideAuthApi(@Named("authRetrofit")retrofit: Retrofit): AuthApi =
-        retrofit.create(AuthApi::class.java)
+    fun provideAuthApi(@Named("authRetrofit")retrofit: Retrofit): V3Api =
+        retrofit.create(V3Api::class.java)
 
     @Provides
     @Singleton
-    fun provideVodApi(@Named("vodRetrofit") retrofit: Retrofit): VodApi =
-        retrofit.create(VodApi::class.java)
+    fun provideVodApi(@Named("vodRetrofit") retrofit: Retrofit): V1Api =
+        retrofit.create(V1Api::class.java)
 
     @Provides
     @Singleton

@@ -92,6 +92,7 @@ import androidx.navigation.NavController
 import com.example.myfirstandroidtvapp.R
 import com.example.myfirstandroidtvapp.data.remote.util.ApiResult
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VodViewModel
+import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ChannelViewModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -106,6 +107,7 @@ import timber.log.Timber
 fun LoginRegistrationScreen(
     loginViewModel: LoginViewModel,
     vodViewModel: VodViewModel,
+    channelViewModel: ChannelViewModel,
     navController: NavController
 ) {
     var isSignup by remember { mutableStateOf(false) }
@@ -136,6 +138,7 @@ fun LoginRegistrationScreen(
         when (configState) {
             is ConfigState.Success -> {
                 vodViewModel.fetchVodCategories()
+                channelViewModel.loadChannels()
             }
 
             is ConfigState.Error -> {

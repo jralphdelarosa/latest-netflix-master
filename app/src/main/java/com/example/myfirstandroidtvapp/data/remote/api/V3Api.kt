@@ -1,7 +1,6 @@
 package com.example.myfirstandroidtvapp.data.remote.api
 
 import com.example.myfirstandroidtvapp.data.remote.dto.AppContentPlanResponse
-import com.example.myfirstandroidtvapp.data.remote.dto.ConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CredentialResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.CustomDomainConfigResponse
 import com.example.myfirstandroidtvapp.data.remote.dto.LoginResponse
@@ -29,7 +28,7 @@ sealed class ApiResponse<out T> {
     object NetworkError : ApiResponse<Nothing>()
 }
 
-interface AuthApi {
+interface V3Api {
     @POST("clients/auth/{tenantId}/login/")
     suspend fun login(
         @Path("tenantId") tenantId: String,
