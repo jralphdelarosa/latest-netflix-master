@@ -22,7 +22,8 @@ data class PlaylistVideoResponse(
 
 data class PlaylistVideoOrderResponse(
     @SerializedName("uuid") val uuid: String? = null,
-    @SerializedName("video") val video: PlaylistVideoResponse? = null
+    @SerializedName("video") val video: PlaylistVideoResponse? = null,
+    @SerializedName("sort_order") val sortOrder: Int = 0
 )
 
 data class PlaylistResponse(
@@ -48,5 +49,6 @@ data class ChannelResponse(
     @SerializedName("current_playing_time") val currentPlayingTime: Int? = null,
     @SerializedName("playlists") val playlists: List<PlaylistResponse>? = null,
     @SerializedName("live_stream_subscription_plans") val subscriptionPlans: List<SubscriptionPlan> = emptyList(),
-    @SerializedName("credentials") val credentials: CredentialResponse? = null
+    @SerializedName("credentials") val credentials: CredentialResponse? = null,
+    @SerializedName("position") val position: Int = 0
 )
