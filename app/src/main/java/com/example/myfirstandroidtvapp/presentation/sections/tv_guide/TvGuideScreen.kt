@@ -1,5 +1,6 @@
 package com.example.myfirstandroidtvapp.presentation.sections.tv_guide
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -27,7 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.myfirstandroidtvapp.R
+import com.example.myfirstandroidtvapp.data.remote.dto.PlaylistResponse
+import com.example.myfirstandroidtvapp.data.remote.dto.PlaylistVideoResponse
 import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ChannelViewModel
 import java.time.Duration
 import java.time.LocalTime
@@ -36,111 +42,57 @@ import java.time.format.DateTimeFormatter
 /**
  * Created by John Ralph Dela Rosa on 4/20/2025.
  */
-// Dummy models
-data class Program(val title: String, val startTime: String, val endTime: String)
-data class Channel(val name: String, val programs: List<Program>)
 
-// Dummy data
-val channels = listOf(
-    Channel(
-        "SHO", listOf(
-            Program("Silicon Valley", "18:00", "18:30"),
-            Program("Silicon Valley", "18:30", "19:00"),
-            Program("Silicon Valley", "19:00", "19:30"),
-            Program("Silicon Valley", "19:30", "20:30"),
-            Program("Silicon Valley", "20:30", "21:30"),
-            Program("Silicon Valley", "21:30", "23:30"),
-            Program("Silicon Valley", "23:30", "24:00")
-        )
-    ), Channel(
-        "HBO", listOf(
-            Program("Game of Thrones", "18:00", "19:00"),
-            Program("Silicon Valley", "19:00", "19:30")
-        )
-    ), Channel(
-        "NGC", listOf(
-            Program("Captain America", "17:00", "18:30"),
-            Program("Running Wild", "18:30", "19:00"),
-            Program("Blood Creek", "19:00", "20:00")
-        )
-    )
-)
-
-val timeSlots = listOf("17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00")
-val thirtyMinuteWidth = 120.dp
-
+@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun TvGuideScreen(
     channelViewModel: ChannelViewModel,
     navController: NavController
 ) {
-    val background = painterResource(id = R.drawable.main_bg)
+    val channelsState by channelViewModel.channels.collectAsState()
+    val channelList = channelsState?.results ?: emptyList()
+
+    val thirtyMinuteWidth = 300.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = background,
-            contentDescription = "TV Guide Background",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
 
         // Overlay your actual UI
         Box(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            // Time row
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(start = 88.dp, top = 8.dp, bottom = 8.dp) // Offset start to match channel names
-//                    .horizontalScroll(rememberScrollState()),
-//                horizontalArrangement = Arrangement.Start
-//            ) {
-//                timeSlots.forEach { time ->
-//                    Box(
-//                        modifier = Modifier
-//                            .width(thirtyMinuteWidth)
-//                            .height(40.dp),
-//                        contentAlignment = Alignment.Center
-//                    ) {
-//                        BasicText(
-//                            text = time,
-//                            style = MaterialTheme.typography.bodyLarge.copy(
-//                                color = Color.White,
-//                                fontWeight = FontWeight.Bold,
-//                                fontSize = 16.sp
-//                            )
-//                        )
-//                    }
-//                }
-//            }
-            val focusRequester = remember { FocusRequester() }
-            var focusedIndex by remember { mutableStateOf(-1) }
-
             LazyColumn(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .align(Alignment.BottomStart)
             ) {
-                items(channels.size) { index ->
+                items(channelList.size) { index ->
                     Row(
                         modifier = Modifier.padding(vertical = 8.dp)
                     ) {
                         // Channel Name
                         Box(
                             modifier = Modifier
-                                .width(100.dp)
-                                .height(80.dp)
+                                .width(180.dp)
+                                .height(100.dp)
                                 .background(Color.White.copy(alpha = 0.8f))
-                                .border(1.dp, Color.Black)
-                                .padding(8.dp),
+                                .border(1.dp, Color.Black),
                             contentAlignment = Alignment.Center
                         ) {
-                            BasicText(
-                                text = channels[index].name,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = Color.Black, fontWeight = FontWeight.Bold
-                                )
+
+                            val imagePainter = rememberAsyncImagePainter(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(channelList[index].thumbnail)
+                                    .crossfade(true)
+                                    .placeholder(R.drawable.logo)
+                                    .error(R.drawable.logo)
+                                    .build()
+                            )
+
+                            Image(
+                                painter = imagePainter,
+                                contentDescription = channelList[index].title,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
                         }
 
@@ -150,18 +102,19 @@ fun TvGuideScreen(
                         Row(
                             modifier = Modifier
                                 .horizontalScroll(rememberScrollState())
-                                .height(80.dp)
+                                .height(100.dp)
                         ) {
-                            channels[index].programs.forEach { program ->
 
-                                val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                                val start = LocalTime.parse(program.startTime, formatter)
-                                val end = LocalTime.parse(program.endTime, formatter)
-                                val durationMinutes = Duration.between(start, end).toMinutes()
+                            channelList[index].playlists?.forEach { playlist ->
 
-                                val width = (durationMinutes / 30f) * thirtyMinuteWidth
+                                playlist.videosOrder?.forEach{ video ->
+                                    val durationMinutes = parseDurationToMinutes(video.video?.duration)
+                                    val width = (durationMinutes / 30f) * thirtyMinuteWidth
 
-                                ProgramItem(program = program, width = width)
+                                    ProgramItem(playlistVideoResponse = video.video!!, width = width)
+                                }
+
+
                             }
                         }
                     }
@@ -172,7 +125,7 @@ fun TvGuideScreen(
 }
 
 @Composable
-fun ProgramItem(program: Program, width: Dp) {
+fun ProgramItem(playlistVideoResponse: PlaylistVideoResponse, width: Dp) {
     var isFocused by remember { mutableStateOf(false) }
 
     Box(
@@ -183,7 +136,7 @@ fun ProgramItem(program: Program, width: Dp) {
                 Color.Red.copy(alpha = 0.20f)
             )
             .border(
-                width = 2.dp,
+                width = 1.dp,
                 color = if (isFocused) Color.Red else Color.White
             )
             .focusable()
@@ -193,12 +146,40 @@ fun ProgramItem(program: Program, width: Dp) {
             .padding(8.dp),
         contentAlignment = Alignment.CenterStart
     ) {
-        BasicText(
-            text = program.title,
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = Color.White,
-                fontWeight = FontWeight.Medium
+        Column {
+            BasicText(
+                text = playlistVideoResponse.title.toString(),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
             )
-        )
+            Spacer(modifier = Modifier.width(10.dp))
+            BasicText(
+                text = playlistVideoResponse.duration.toString(),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+
+    }
+}
+
+fun parseDurationToMinutes(duration: String?): Float {
+    if (duration == null) return 0f
+
+    return try {
+        val parts = duration.split(":")
+        if (parts.size != 3) return 0f
+
+        val hours = parts[0].toFloatOrNull() ?: 0f
+        val minutes = parts[1].toFloatOrNull() ?: 0f
+        val seconds = parts[2].toFloatOrNull() ?: 0f
+
+        hours * 60f + minutes + seconds / 60f
+    } catch (e: Exception) {
+        0f
     }
 }
