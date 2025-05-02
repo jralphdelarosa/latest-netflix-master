@@ -34,9 +34,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,8 +57,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 /**
@@ -71,9 +75,101 @@ fun TvGuideScreen(
     val tryUrl = "https://vod-lb-cdn.tvstartupengine.com/tvs-vod/prod/media/af4303c3-3b68-482a-bbc6-7aa87f2e99f4/41ea2c28-418e-4424-aa4f-37ea150b662b/videos/4577dc43-29bc-4179-b3df-b02ea8fd1e51/output/4577dc43-29bc-4179-b3df-b02ea8fd1e51_1080p.mp4"
     val tryThumbnail = "https://vod-lb-cdn.tvstartupengine.com/tvs-asset/prod/af4303c3-3b68-482a-bbc6-7aa87f2e99f4/41ea2c28-418e-4424-aa4f-37ea150b662b/images/thumbnail/a2185107fe5c2645a0a9c54504994c75.jpeg"
     val channels by channelViewModel.uiChannels.collectAsState()
+
+
+    val now = remember { LocalTime.now().withMinute(0).withSecond(0).withNano(0) }
+    val roundedNow = now.withMinute((now.minute / 30) * 30).withSecond(0).withNano(0)
+    val startTime = roundedNow.minusHours(2)
+    val timeBlocks = remember {
+        (0..48).map { index -> // Show 6 hours (12 blocks of 30 mins)
+            now.plusMinutes(index * 30L)
+        }
+    }
+
+    val currentTime = remember { mutableStateOf(LocalTime.now()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime.value = LocalTime.now()
+            delay(60_000L) // every 1 minute
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
+        val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")) }
+
+        val density = LocalDensity.current
+
+        Box(
+            modifier = Modifier
+                .width(100.dp)
+                .height(30.dp)
+                .padding(start = 10.dp)
+                .background(Color.Black.copy(alpha = 0.6f))
+                .zIndex(3f),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = today,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .padding(start = 115.dp) // same as LazyRow padding
+                .fillMaxSize()
+                .height(30.dp)
+                .zIndex(3f)
+        ) {
+            // Red Time Indicator
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(2.dp)
+                    .background(Color.Red)
+                    .absoluteOffset {
+                        val blockWidthPx = with(density) { 100.dp.toPx() }
+                        val paddingPx = 0f // already inside padded container
+                        val minutesFromStart =
+                            Duration.between(startTime, currentTime.value).toMinutes()
+                                .coerceAtLeast(0)
+                        val offsetPx = (minutesFromStart / 30f) * blockWidthPx
+                        IntOffset((offsetPx + paddingPx).roundToInt(), 0)
+                    }
+                    .zIndex(4f)
+            )
+
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(30.dp)
+                    .zIndex(3f), // Offset to align with channel thumbnails
+                horizontalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+
+                items(timeBlocks.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .width(100.dp) // Match average program block width
+                            .fillMaxHeight()
+                            .background(Color.Black.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = timeBlocks[index].format(DateTimeFormatter.ofPattern("HH:mm")),
+                            color = Color(0xFFFF3B3B.toInt()),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        }
 
         Box(
             modifier = Modifier
@@ -95,7 +191,7 @@ fun TvGuideScreen(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .height(4 * (60.dp + 4.dp)) // 100dp row height + 8dp top & bottom padding
+                    .height(3 * (60.dp + 4.dp)) // 100dp row height + 8dp top & bottom padding
                     .padding(start = 8.dp)
             ) {
 
@@ -155,8 +251,7 @@ fun TvGuideScreen(
                         LazyRow(
                             modifier = Modifier
                                 .height(60.dp)
-                                .focusGroup(),
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                .focusGroup()
                         ) {
 
                             items(reorderedVideos.size) { videoIndex ->
@@ -188,8 +283,7 @@ fun ProgramItem(program: ProgramUiModel) {
         ),
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) Color.Red.copy(alpha = 0.50f) else Color.Gray.copy(alpha = 0.50f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        )
     ) {
         Column(
             modifier = Modifier
