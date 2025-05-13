@@ -1,9 +1,6 @@
 package com.example.myfirstandroidtvapp.presentation.sections.tv_guide
 
-import android.annotation.SuppressLint
-import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -11,35 +8,42 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
@@ -48,18 +52,16 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.myfirstandroidtvapp.R
-import com.example.myfirstandroidtvapp.data.remote.dto.PlaylistResponse
-import com.example.myfirstandroidtvapp.data.remote.dto.PlaylistVideoResponse
 import com.example.myfirstandroidtvapp.presentation.sections.dashboard.VideoPlayer
 import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ChannelViewModel
 import com.example.myfirstandroidtvapp.presentation.shared_viewmodel.ProgramUiModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -76,10 +78,8 @@ fun TvGuideScreen(
     val tryThumbnail = "https://vod-lb-cdn.tvstartupengine.com/tvs-asset/prod/af4303c3-3b68-482a-bbc6-7aa87f2e99f4/41ea2c28-418e-4424-aa4f-37ea150b662b/images/thumbnail/a2185107fe5c2645a0a9c54504994c75.jpeg"
     val channels by channelViewModel.uiChannels.collectAsState()
 
-
+    val density = LocalDensity.current
     val now = remember { LocalTime.now().withMinute(0).withSecond(0).withNano(0) }
-    val roundedNow = now.withMinute((now.minute / 30) * 30).withSecond(0).withNano(0)
-    val startTime = roundedNow.minusHours(2)
     val timeBlocks = remember {
         (0..48).map { index -> // Show 6 hours (12 blocks of 30 mins)
             now.plusMinutes(index * 30L)
@@ -88,10 +88,19 @@ fun TvGuideScreen(
 
     val currentTime = remember { mutableStateOf(LocalTime.now()) }
 
+    val blockWidthPx = with(density) { 100.dp.toPx() }
+
+    val alignedStart = currentTime.value
+        .truncatedTo(ChronoUnit.HOURS)
+        .plusMinutes((currentTime.value.minute / 30) * 30L)
+
+    val minutesFromStart = Duration.between(alignedStart, currentTime.value).toMinutes()
+    val offsetPx = (minutesFromStart / 30f) * blockWidthPx
+
     LaunchedEffect(Unit) {
         while (true) {
             currentTime.value = LocalTime.now()
-            delay(60_000L) // every 1 minute
+            delay(1000) // every 1 minute
         }
     }
 
@@ -100,29 +109,32 @@ fun TvGuideScreen(
     ) {
         val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")) }
 
-        val density = LocalDensity.current
-
         Box(
             modifier = Modifier
-                .width(100.dp)
-                .height(30.dp)
-                .padding(start = 10.dp)
-                .background(Color.Black.copy(alpha = 0.6f))
-                .zIndex(3f),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(start = 10.dp, top = 300.dp)
+                .zIndex(3f)
         ) {
-            Text(
-                text = today,
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+            Box(
                 modifier = Modifier
-            )
+                    .width(100.dp)
+                    .height(30.dp)
+                    .background(Color.Black.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = today,
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                )
+            }
         }
 
         Box(
             modifier = Modifier
-                .padding(start = 115.dp) // same as LazyRow padding
+                .padding(start = 115.dp, top = 300.dp ) // same as LazyRow padding
                 .fillMaxSize()
                 .height(30.dp)
                 .zIndex(3f)
@@ -130,20 +142,16 @@ fun TvGuideScreen(
             // Red Time Indicator
             Box(
                 modifier = Modifier
+                    .padding(start = offsetPx.dp)
                     .fillMaxHeight()
-                    .width(2.dp)
-                    .background(Color.Red)
-                    .absoluteOffset {
-                        val blockWidthPx = with(density) { 100.dp.toPx() }
-                        val paddingPx = 0f // already inside padded container
-                        val minutesFromStart =
-                            Duration.between(startTime, currentTime.value).toMinutes()
-                                .coerceAtLeast(0)
-                        val offsetPx = (minutesFromStart / 30f) * blockWidthPx
-                        IntOffset((offsetPx + paddingPx).roundToInt(), 0)
-                    }
-                    .zIndex(4f)
-            )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .fillMaxHeight()
+                        .background(Color.Red)
+                )
+            }
 
             LazyRow(
                 modifier = Modifier
@@ -163,8 +171,9 @@ fun TvGuideScreen(
                     ) {
                         Text(
                             text = timeBlocks[index].format(DateTimeFormatter.ofPattern("HH:mm")),
-                            color = Color(0xFFFF3B3B.toInt()),
-                            fontSize = 12.sp
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
@@ -208,9 +217,6 @@ fun TvGuideScreen(
                                 .sortedBy { it.position }
                             upcoming + finished
                         }
-                    Timber.tag("asdasd").d("not sorted: %s", channels[index].videos.toString())
-
-                    Timber.tag("asdasd").d("sorted: %s", reorderedVideos.toString())
 
                     Row(modifier = Modifier.padding(vertical = 2.dp)) {
 
@@ -279,10 +285,10 @@ fun ProgramItem(program: ProgramUiModel) {
         shape = RectangleShape,
         border = BorderStroke(
             width = 1.dp,
-            color = if (isFocused) Color.Red else Color.White
+            color = if (isFocused) Color.White else Color.Red
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (isFocused) Color.Red.copy(alpha = 0.50f) else Color.Gray.copy(alpha = 0.50f)
+            containerColor = if (isFocused) Color.Gray.copy(alpha = 0.50f) else Color.Red.copy(alpha = 0.50f)
         )
     ) {
         Column(
